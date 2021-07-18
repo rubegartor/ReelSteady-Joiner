@@ -1,0 +1,36 @@
+{
+  "productName": "ReelSteady Joiner",
+  "appId": "org.rubegartor.reelsteady-joiner",
+  "artifactName": "${productName}-setup-${version}.${ext}",
+  "directories": {
+    "output": "builds/"
+  },
+  "files": [
+    "node_modules/",
+    "package.json",
+    "app/udtacopy.exe",
+    "app/index.html",
+    "app/app.js",
+    "index.js",
+    "app/favicon.ico"
+  ],
+  "extraResources": [
+    {
+      "from": "app/udtacopy.exe",
+      "to": "app/udtacopy.exe"
+    }
+  ],
+  "nsis": {
+    "installerIcon": "app/favicon.ico",
+    "installerHeaderIcon": "app/favicon.ico",
+    "deleteAppDataOnUninstall": true
+  },
+  "win": {
+    "icon": "app/favicon.ico",
+    "target":[
+      "nsis",
+      "msi"
+    ]
+  },
+
+}

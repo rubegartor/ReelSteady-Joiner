@@ -1,0 +1,4 @@
+/.idea
+/builds
+/node_modules
+package-lock.json

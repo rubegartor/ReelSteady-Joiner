@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
+    <title>ReelSteady Joiner</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0 auto;
+            font-family: Arial, Helvetica, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #e7e7e7;
+            margin: 40px 40px 40px 40px;
+        }
+
+        .centerContainer {
+            width: 100%;
+            text-align: center;
+        }
+
+        button {
+            display: block;
+            background-color: #50BB9B;
+            border: none;
+            color: white;
+            padding: 15px 32px;
+            text-align: center;
+            text-decoration: none;
+            font-size: 16px;
+            outline: 0;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        button:disabled {
+            background-color: #555555;
+            opacity: 1;
+            color: #d2d2d2;
+        }
+
+        hr {
+            border: 1px solid #d2d2d2;
+        }
+
+        h1 {
+            margin: 30px 0 15px 0;
+            color: #555555;
+        }
+
+        h3 {
+            margin: 20px 0 20px 0;
+            color: #555555;
+        }
+
+        #selectFiles {
+            margin-bottom: 30px;
+        }
+
+        .processDataContainer {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            color: #555555;
+        }
+
+        #rawProcessData {
+            height: 150px;
+            width: 75%;
+            margin-top: 30px;
+            outline: 0;
+            border-radius: 5px;
+        }
+
+        .text-success {
+            color: #50BB9B;
+        }
+    </style>
+</head>
+<body>
+<div class="centerContainer">
+    <div>
+        <h1>ReelSteady Joiner</h1>
+        <hr>
+        <h3>Select the videos you want to join without losing the gyroscope data</h3>
+    </div>
+    <button type="button" id="selectFiles">Select files</button>
+    <hr>
+    <div class="processDataContainer">
+        <div>
+            <strong>Status: </strong><span id="status">Waiting files...</span>
+        </div>
+    </div>
+    <div class="rawData">
+        <textarea id="rawProcessData" readonly></textarea>
+    </div>
+</div>
+</body>
+<script src="app.js"></script>
+</html>
