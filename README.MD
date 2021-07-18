@@ -2,7 +2,7 @@
 
 _Join your video files extracted from GoPro without losing quality or gyroscope data, then stabilize it with ReelSteady_
 
-_Perfect for long videos like long range dron footage_ 
+_Perfect for long videos like long range drone footage_ 
 
 _**INFO**: At the moment only available for use on Windows_
 
