@@ -1,0 +1,153 @@
+* {
+    box-sizing: border-box;
+    margin: 0 auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    user-select: none;
+}
+
+body {
+    background-color: #212529;
+    -webkit-user-select: none;
+}
+
+#wrapper {
+    margin: 40px 40px 0 40px;
+}
+
+.centerContainer {
+    width: 100%;
+    text-align: center;
+}
+
+.nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 45px;
+    -webkit-app-region: drag;
+}
+
+.control-box{
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    width: 16px;
+    height: 26px;
+    padding-top: 5px;
+    margin-left: 10px;
+    -webkit-app-region: no-drag;
+    z-index: 9;
+}
+
+.control-box .close{
+    background-color: #e74c3c;
+    width: 16px;
+    height: 16px;
+    border-radius: 100%;
+    border: none;
+    cursor: pointer;
+    z-index: 99;
+}
+
+.control-box .close:hover{
+    background-color: #c0392b;
+}
+
+button {
+    display: block;
+    border: none;
+    color: white;
+    padding: 15px 32px;
+    text-align: center;
+    text-decoration: none;
+    font-size: 16px;
+    outline: 0;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+button:disabled {
+    background-color: #555555;
+    opacity: 1;
+    color: #d2d2d2;
+    cursor: not-allowed;
+}
+
+.button-green {
+    background-color: #27AE60;
+}
+
+.button-orange {
+    background-color: #E67E22;
+}
+
+.buttonContainer {
+    display: inline-flex;
+    margin-top: 15px;
+}
+
+.buttonContainer > * {
+    margin: 0 5px 0 5px;
+}
+
+h1 {
+    margin: 30px 0 15px 0;
+    color: #ebe5d6;
+    font-size: 2.5em;
+}
+
+.subtitle {
+    color: #ebe5d6;
+    font-size: 1.15em;
+}
+
+#selectFiles, #processVideos {
+    margin-bottom: 10px;
+}
+
+.processDataContainer {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    color: white;
+}
+
+#rawProcessData {
+    height: 240px;
+    width: 75%;
+    margin-top: 30px;
+    outline: 0;
+    border-radius: 5px;
+    resize: none;
+}
+
+.text-success {
+    color: #27AE60;
+}
+
+a {
+    text-decoration: none;
+    color: #27AE60;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.gray-href {
+    text-decoration: none;
+    color: #555555;
+    font-weight: normal;
+}
+
+.repo {
+    text-align: right;
+    color: #555555;
+    margin-top: 30px;
+}

@@ -8,29 +8,29 @@
   "files": [
     "node_modules/",
     "package.json",
-    "app/udtacopy.exe",
-    "app/index.html",
+    "app/utils/udtacopy.exe",
+    "app/templates/index.html",
+    "app/assets/style/app.css",
     "app/app.js",
     "index.js",
-    "app/favicon.ico"
+    "app/assets/images/icn.ico"
   ],
   "extraResources": [
     {
-      "from": "app/udtacopy.exe",
-      "to": "app/udtacopy.exe"
+      "from": "app/utils/udtacopy.exe",
+      "to": "app/utils/udtacopy.exe"
     }
   ],
   "nsis": {
-    "installerIcon": "app/favicon.ico",
-    "installerHeaderIcon": "app/favicon.ico",
+    "installerIcon": "app/assets/images/icn.ico",
+    "installerHeaderIcon": "app/assets/images/icn.ico",
     "deleteAppDataOnUninstall": true
   },
   "win": {
-    "icon": "app/favicon.ico",
+    "icon": "app/assets/images/icn.ico",
     "target":[
       "nsis",
       "msi"
     ]
-  },
-
+  }
 }

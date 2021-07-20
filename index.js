@@ -1,16 +1,16 @@
 const { app, BrowserWindow } = require('electron')
-const path = require('path');
-const iconPath = path.join(__dirname, "app", "favicon.ico");
+const path = require('path')
 
 function createWindow () {
     const win = new BrowserWindow({
         width: 960,
         height: 600,
-        icon: iconPath,
+        frame: false,
+        icon: path.join(__dirname, 'app', 'assets', 'images', 'icon.png'),
         'minHeight': 600,
         'minWidth': 720,
         title: 'ReelSteady Joiner',
-        resizable: true,
+        resizable: false,
         autoHideMenuBar: true,
         webPreferences: {
             nodeIntegration: true,
@@ -19,7 +19,7 @@ function createWindow () {
         }
     })
 
-    win.loadFile('app/index.html')
+    win.loadFile('app/templates/index.html')
 }
 
 app.whenReady().then(() => {

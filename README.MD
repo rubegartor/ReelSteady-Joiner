@@ -2,7 +2,7 @@
 
 _Join your video files extracted from GoPro without losing quality or gyroscope data, then stabilize it with ReelSteady_
 
-_Perfect for long videos like long range dron footage_ 
+_Perfect for long videos like long range drone footage_ 
 
 _**INFO**: At the moment only available for use on Windows_
 
@@ -10,19 +10,22 @@ _**INFO**: At the moment only available for use on Windows_
 
 ### Installation and usage 🔧
 
-_Execute installer (**Releases tab**) or build source code and execute it_
+_Download and execute installer (**[Releases tab](https://github.com/rubegartor/ReelSteady-Joiner/releases)**) or build source code and execute it_
 
-1. Select all of your mp4 files to concatenate (Normally 4GB chunks or less)
-![Select files](https://i.imgur.com/OjaB1mQ.png)
+1. Select all of your mp4 files to concatenate (Normally 4GB chunks or less) and start merge process
+![Select files](https://i.imgur.com/ISKlivb.png)
+![Select files](https://i.imgur.com/6n8LBA5.png)
    
 
 2. Let ReelSteady Joiner work and combine all the videos selected above
    (You can track the progress with total time of video processed)
-![Processing videos](https://i.imgur.com/ZF8pPgo.png)
+![Processing videos](https://i.imgur.com/31hOm34.png)
    
 
 3. Check the output video file and stabilize it with ReelSteady
-![Finished](https://i.imgur.com/VL3uh87.png)
+![Finished](https://i.imgur.com/gKsuuha.png)
+
+**Warning**: If you process parts that do not belong to the same run, the final video file will be corrupted
 
 ### Pre-requisites for development 📋
 
