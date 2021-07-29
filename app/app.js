@@ -105,9 +105,9 @@ function startProcessing(filePaths) {
     processVideosBtn.setAttribute('disabled', 'disabled');
 
     let actDate = new Date;
-    let projectDir = [actDate.getDate(), actDate.getMonth() + 1, actDate.getFullYear()].join('-')
+    let projectDir = [('0' + actDate.getDate()).slice(-2), ('0' + actDate.getMonth()).slice(-2) + 1, actDate.getFullYear()].join('-')
         + ' ' +
-        [actDate.getHours(), actDate.getMinutes(), actDate.getSeconds()].join('_');
+        [('0' + actDate.getHours()).slice(-2), ('0' + actDate.getMinutes()).slice(-2), ('0' + actDate.getSeconds()).slice(-2)].join('_');
 
     if (!fs.existsSync(path.join(appPath, projectDir.toString()))) {
         fs.mkdirSync(path.join(appPath, projectDir.toString()));
