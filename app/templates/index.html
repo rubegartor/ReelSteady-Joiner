@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
@@ -23,7 +23,7 @@
         </div>
         <div class="processDataContainer">
             <div>
-                <strong>Status: </strong><span id="status">Waiting files...</span>
+                <strong>Status: </strong><span id="status" class="loading">Waiting files</span>
             </div>
         </div>
         <div class="rawData">
@@ -31,6 +31,7 @@
         </div>
     </div>
     <div class="repo">
+        <a href="https://github.com/rubegartor/ReelSteady-Joiner/releases" id="updateAvailable" class="update-available" style="display: none;">(Update available)</a>
         <a href="https://github.com/rubegartor/ReelSteady-Joiner" class="gray-href" id="openGithub">https://github.com/rubegartor/ReelSteady-Joiner</a>
     </div>
 </div>

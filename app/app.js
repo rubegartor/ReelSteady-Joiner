@@ -1,5 +1,7 @@
+const version = '1.1.0';
 const {dialog, app, getCurrentWindow} = require('electron').remote;
-const {shell} = require('electron')
+const {shell} = require('electron');
+const rp = require('request-promise');
 const fs = require('fs');
 const path = require('path');
 const spawn = require('child_process').spawn;
@@ -10,6 +12,7 @@ const ffmpegPath = require('ffmpeg-static').replace(
 
 const appPath = path.join(app.getPath('documents'), 'ReelSteady Joiner'); //Document path for save processed videos
 const exePath = isDev() ? app.getAppPath() : path.dirname(process.execPath);
+const remotePackageJsonUrl = 'https://raw.githubusercontent.com/rubegartor/ReelSteady-Joiner/master/package.json';
 
 // Javascript interface elements
 const statusElem = document.getElementById('status');
@@ -17,10 +20,14 @@ const selectFileBtn = document.getElementById('selectFiles')
 const processVideosBtn = document.getElementById('processVideos');
 const rawProcessDataElem = document.getElementById('rawProcessData');
 const closeWindowBtn = document.getElementById('closeWindow');
+const updateAvailableLink = document.getElementById('updateAvailable');
 
 if (!fs.existsSync(path.join(appPath))) {
     fs.mkdirSync(path.join(appPath));
 }
+
+//Check for new updates when starting the application
+checkForUpdates();
 
 let videoFiles = [];
 
@@ -45,11 +52,13 @@ selectFileBtn.addEventListener('click', () => {
 
 
             statusElem.innerText = videoFiles.length + ' videos loaded';
+            statusElem.classList.remove('loading');
             processVideosBtn.removeAttribute('disabled');
         } else {
             rawProcessDataElem.value = '';
             processVideosBtn.setAttribute('disabled', 'disabled');
-            statusElem.innerText = 'Waiting files...';
+            statusElem.innerText = 'Waiting files';
+            statusElem.classList.add('loading');
         }
 
         statusElem.classList.remove('text-success');
@@ -70,10 +79,27 @@ document.addEventListener('click', (event) => {
         shell.openPath(path.join(appPath, millis));
     }
 
-    if (element.id === 'openGithub') {
+    if (element.id === 'openGithub' || element.id === 'updateAvailable') {
         shell.openExternal(element.getAttribute('href'));
     }
 });
+
+/**
+ * Function that checks if ReelSteady Joiner has new updates
+ */
+function checkForUpdates() {
+    rp(remotePackageJsonUrl)
+        .then(function (data) {
+            let packageJson = JSON.parse(data.toString());
+            let repoVersion = packageJson.version;
+
+            if (repoVersion !== version) {
+                updateAvailableLink.style.removeProperty('display');
+            } else {
+                updateAvailableLink.style.setProperty('display', 'none');
+            }
+        });
+}
 
 /**
  * Function that returns if app is packaged or not
@@ -81,7 +107,7 @@ document.addEventListener('click', (event) => {
  * @returns {boolean}
  */
 function isDev() {
-    return !app.isPackaged
+    return !app.isPackaged;
 }
 
 /**
@@ -105,7 +131,7 @@ function startProcessing(filePaths) {
     processVideosBtn.setAttribute('disabled', 'disabled');
 
     let actDate = new Date;
-    let projectDir = [('0' + actDate.getDate()).slice(-2), ('0' + actDate.getMonth()).slice(-2) + 1, actDate.getFullYear()].join('-')
+    let projectDir = [('0' + actDate.getDate()).slice(-2), ('0' + (actDate.getMonth() + 1)).slice(-2), actDate.getFullYear()].join('-')
         + ' ' +
         [('0' + actDate.getHours()).slice(-2), ('0' + actDate.getMinutes()).slice(-2), ('0' + actDate.getSeconds()).slice(-2)].join('_');
 
@@ -136,13 +162,14 @@ function startProcessing(filePaths) {
     let proc = spawn(ffmpegPath, args, {cwd: path.join(appPath, projectDir.toString())});
 
     proc.stderr.setEncoding('utf8')
-    proc.stderr.on('data', function (data) {
-        statusElem.innerText = 'Processing videos...'
+    proc.stderr.on('data', (data) => {
+        statusElem.innerText = 'Processing videos';
+        statusElem.classList.add('loading');
         appendToTextArea(data);
     });
 
-    proc.on('close', function () {
-        fs.unlinkSync(path.join(appPath, projectDir.toString(), 'concat.txt')) //The file concat.txt is deleted because it is useless for the user
+    proc.on('close', () => {
+        fs.unlinkSync(path.join(appPath, projectDir.toString(), 'concat.txt')) //The file concat.txt is deleted because it's useless for the user
         processGyro(projectDir, filePathsSorted);
     });
 }
@@ -161,14 +188,15 @@ function processGyro(projectDir, filePathsSorted) {
         'output.mp4'
     ];
 
-    let gyroProcessPath = isDev() ? path.join(exePath, 'app', 'utils') + '\\udtacopy.exe' : path.join(exePath, 'resources', 'app', 'utils') + '\\udtacopy.exe';
+    let gyroProcessPath = isDev() ? path.join(exePath, 'app', 'utils', 'udtacopy.exe') : path.join(exePath, 'resources', 'app', 'utils', 'udtacopy.exe');
     let proc = spawn(gyroProcessPath, args, {cwd: path.join(appPath, projectDir.toString())});
 
-    proc.on('close', function () {
+    proc.on('close', () => {
         videoFiles = [];
         appendToTextArea('\nFinished!');
         statusElem.innerHTML = 'Finished! (<a href="javascript:void(0);" id="openPath" data-path="' + projectDir + '">Open in explorer</a>)';
         statusElem.classList.add('text-success');
+        statusElem.classList.remove('loading');
         selectFileBtn.removeAttribute('disabled');
     });
 }

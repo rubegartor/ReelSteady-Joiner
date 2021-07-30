@@ -16,6 +16,8 @@
     "electron-builder": "^22.11.7"
   },
   "dependencies": {
-    "ffmpeg-static": "^4.4.0"
+    "ffmpeg-static": "^4.4.0",
+    "request": "^2.88.2",
+    "request-promise": "^4.2.6"
   }
 }
