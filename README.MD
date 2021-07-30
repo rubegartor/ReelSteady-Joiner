@@ -27,6 +27,10 @@ _Download and execute installer (**[Releases tab](https://github.com/rubegartor/
 
 **Warning**: If you process parts that do not belong to the same run, the final video file will be corrupted
 
+### Update ReelSteady Joiner ⚙️
+
+_Simple, just download and run the installer for the new version._
+
 ### Pre-requisites for development 📋
 
 _Required dependencies_
