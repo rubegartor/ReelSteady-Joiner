@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
     <title>ReelSteady Joiner</title>
     <link rel="stylesheet" type="text/css" href="../assets/style/app.css">
 </head>
@@ -26,10 +25,11 @@
                 <strong>Status: </strong><span id="status" class="loading">Waiting files</span>
             </div>
         </div>
-        <div class="rawData">
-            <textarea id="rawProcessData" readonly></textarea>
-        </div>
     </div>
+    <div class="progress-container">
+        <progress id="progressBar" max="100" value="0" class="progress-orange"></progress>
+    </div>
+    <hr style="margin-top: 25px;">
     <div class="repo">
         <a href="https://github.com/rubegartor/ReelSteady-Joiner/releases" id="updateAvailable" class="update-available" style="display: none;">(Update available)</a>
         <a href="https://github.com/rubegartor/ReelSteady-Joiner" class="gray-href" id="openGithub">https://github.com/rubegartor/ReelSteady-Joiner</a>
