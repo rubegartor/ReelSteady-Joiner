@@ -117,7 +117,7 @@ h1 {
     font-size: 1.15em;
 }
 
-#selectFiles, #processVideos {
+#selectFiles, #processVideos, #settingsBtn {
     margin-bottom: 10px;
 }
 
@@ -251,6 +251,29 @@ hr {
     border: 0;
     height: 0;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lastProjectContainer {
+    width: 100%;
+    margin-top: 25px;
+    height: 208px;
+}
+
+.lastProjectContainer .item {
+    display: flex;
+    align-items: center;
+    color: var(--light-gray);
+    background-color: var(--gray);
+    width: 100%;
+    height: 44px;
+    margin: 4px 0 4px 0;
+    padding: 6px 16px 6px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.lastProjectContainer .item:hover {
+    filter: brightness(0.90);
 }
 
 .loading:after {

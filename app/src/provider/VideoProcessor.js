@@ -12,7 +12,7 @@ const exePath = Commons.isDev() ? app.getAppPath() : path.dirname(process.execPa
 const gyroProcessPath = Commons.isDev() ? path.join(exePath, 'app', 'utils', 'udtacopy.exe') : path.join(exePath, 'resources', 'app', 'utils', 'udtacopy.exe');
 const exiftool = Commons.isDev() ? path.join(exePath, 'app', 'utils', 'exiftool.exe') : path.join(exePath, 'resources', 'app', 'utils', 'exiftool.exe');
 
-const ProgressBar = require('../components/ProgressBar');
+const ProgressBar = require(path.join(__dirname, '../components/ProgressBar'));
 
 class VideoProcessor {
     statusElem = document.getElementById('status');
@@ -33,12 +33,8 @@ class VideoProcessor {
         this.progressBar.maximum = 100;
         this.progressBar.value = 0;
 
-        let actDate = new Date;
         //TODO: Maybe make project dir => File modify date metadata??
-        let projectDir = [('0' + actDate.getDate()).slice(-2), ('0' + (actDate.getMonth() + 1)).slice(-2), actDate.getFullYear()].join('-')
-            + ' ' +
-            [('0' + actDate.getHours()).slice(-2), ('0' + actDate.getMinutes()).slice(-2), ('0' + actDate.getSeconds()).slice(-2)].join('_');
-
+        let projectDir = Commons.dateToStr(new Date, '-', '_');
         if (!fs.existsSync(path.join(Commons.documentsPath, projectDir.toString()))) {
             fs.mkdirSync(path.join(Commons.documentsPath, projectDir.toString()));
         }
@@ -111,8 +107,6 @@ class VideoProcessor {
     getModifiedDate(firstVideo) {
         return new Promise((resolve, reject) => {
             execFile(exiftool, ['-s', '-s', '-s', '-time:FileModifyDate', firstVideo], (error, stdout, stderr) => {
-                console.log(error);
-                console.log(stderr);
                 error ? reject(stderr) : resolve(stdout);
             });
         });
@@ -132,10 +126,12 @@ class VideoProcessor {
                 outputVideo
             ], () => {
                 this.progressBar.color = ProgressBar.COLOR_GREEN;
-                this.statusElem.innerHTML = 'Finished! (<a href="javascript:void(0);" id="openPath" data-path="' + projectDir + '">Open in explorer</a>)';
+                this.statusElem.innerHTML = 'Finished! (<a href="javascript:void(0);" class="openPath" data-path="' + projectDir + '">Open in explorer</a>)';
                 this.statusElem.classList.add('text-success');
                 this.statusElem.classList.remove('loading');
                 this.selectFileBtn.removeAttribute('disabled');
+
+                Commons.loadLatestProjects();
             });
         });
     }

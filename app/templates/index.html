@@ -17,6 +17,20 @@
             <span class="subtitle">Select the videos you want to join without losing the gyroscope data</span>
         </div>
         <div class="buttonContainer">
+            <button type="button" class="button-green" id="settingsBtn" style="padding: 0 16px 0 16px;">
+                <svg x="0px" y="0px" width="32" height="32" viewBox="0 0 512 512" xml:space="preserve" style="padding-top: 4px;">
+                <g>
+                    <path d="M462,280.72v-49.44l-46.414-16.48c-3.903-15.098-9.922-29.343-17.675-42.447l0.063-0.064l21.168-44.473l-34.96-34.96
+                            l-44.471,21.167l-0.064,0.064c-13.104-7.753-27.352-13.772-42.447-17.673L280.72,50h-49.44L214.8,96.415
+                            c-15.096,3.9-29.343,9.919-42.447,17.675l-0.064-0.066l-44.473-21.167l-34.96,34.96l21.167,44.473l0.066,0.064
+                            c-7.755,13.104-13.774,27.352-17.675,42.447L50,231.28v49.44l46.415,16.48c3.9,15.096,9.921,29.343,17.675,42.447l-0.066,0.064
+                            l-21.167,44.471l34.96,34.96l44.473-21.168l0.064-0.063c13.104,7.753,27.352,13.771,42.447,17.675L231.28,462h49.44l16.48-46.414
+                            c15.096-3.903,29.343-9.922,42.447-17.675l0.064,0.063l44.471,21.168l34.96-34.96l-21.168-44.471l-0.063-0.064
+                            c7.753-13.104,13.771-27.352,17.675-42.447L462,280.72z M256,338.4c-45.509,0-82.4-36.892-82.4-82.4c0-45.509,36.891-82.4,82.4-82.4
+                            c45.509,0,82.4,36.891,82.4,82.4C338.4,301.509,301.509,338.4,256,338.4z" fill="white"/>
+                </g>
+                </svg>
+            </button>
             <button type="button" class="button-orange" id="selectFiles">Select files</button>
             <button type="button" class="button-green" id="processVideos" disabled>Merge!</button>
         </div>
@@ -30,9 +44,10 @@
         <progress id="progressBar" max="100" value="0" class="progress-orange"></progress>
     </div>
     <hr style="margin-top: 25px;">
+    <div class="lastProjectContainer" id="lastProjectContainer"></div>
     <div class="repo">
-        <a href="https://github.com/rubegartor/ReelSteady-Joiner/releases" id="updateAvailable" class="update-available" style="display: none;">(Update available)</a>
-        <a href="https://github.com/rubegartor/ReelSteady-Joiner" class="gray-href" id="openGithub">https://github.com/rubegartor/ReelSteady-Joiner</a>
+        <a href="https://github.com/rubegartor/ReelSteady-Joiner/releases" class="update-available openExternal" id="updateAvailable" style="display: none;">(Update available)</a>
+        <a href="https://github.com/rubegartor/ReelSteady-Joiner" class="gray-href openExternal">https://github.com/rubegartor/ReelSteady-Joiner</a>
     </div>
 </div>
 </body>

@@ -1,5 +1,5 @@
 const {dialog, getCurrentWindow} = require('electron').remote;
-const {shell} = require('electron');
+const {shell, remote} = require('electron');
 const fs = require('fs');
 const path = require('path');
 
@@ -20,6 +20,11 @@ if (!fs.existsSync(path.join(Commons.documentsPath))) {
 
 // Check for new updates when starting the application
 Commons.checkForUpdates();
+
+let config = remote.getGlobal('globalConfig');
+
+// Load list of 4 latest projects
+Commons.loadLatestProjects();
 
 closeWindowBtn.addEventListener('click', () => {
     getCurrentWindow().close();
@@ -62,20 +67,19 @@ processVideosBtn.addEventListener('click', () => {
     videoFiles = [];
 });
 
-
 document.addEventListener('click', (event) => {
-    if (event.target.nodeName === 'A') {
+    let invalidTags = ['path', 'svg'];
+    if (invalidTags.includes(event.target.tagName)) {
+        return;
+    }
+
+    if (event.target.className.includes('openPath')) {
         event.preventDefault();
-        let element = event.target;
+        shell.openPath(path.join(Commons.documentsPath, event.target.dataset.path));
+    }
 
-        if (element.id === 'openPath') {
-            let millis = element.dataset.path;
-
-            shell.openPath(path.join(Commons.documentsPath, millis));
-        }
-
-        if (element.id === 'openGithub' || element.id === 'updateAvailable') {
-            shell.openExternal(element.getAttribute('href'));
-        }
+    if (event.target.className.includes('openExternal')) {
+        event.preventDefault();
+        shell.openExternal(event.target.getAttribute('href'))
     }
 });
