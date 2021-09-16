@@ -1,5 +1,7 @@
 # ReelSteady Joiner
 
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?hosted_button_id=P9JH3CF5DHEJW)
+
 _Join your video files extracted from GoPro without losing quality or gyroscope data, then stabilize it with ReelSteady_
 
 _Perfect for long videos like long range drone footage_ 
