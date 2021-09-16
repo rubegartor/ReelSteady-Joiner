@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const Commons = require(path.join(__dirname, '../provider/commons'));
+const Commons = require(path.join(__dirname, '../provider/Commons'));
 
 class ChapterGroup {
 
