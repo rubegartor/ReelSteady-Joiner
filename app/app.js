@@ -1,202 +1,200 @@
-const version = '1.1.0';
-const {dialog, app, getCurrentWindow} = require('electron').remote;
-const {shell} = require('electron');
-const rp = require('request-promise');
+const {app, dialog, getCurrentWindow} = require('electron').remote;
+const {shell, remote} = require('electron');
 const fs = require('fs');
 const path = require('path');
-const spawn = require('child_process').spawn;
-const ffmpegPath = require('ffmpeg-static').replace(
-    'app.asar',
-    'app.asar.unpacked'
-);
 
-const appPath = path.join(app.getPath('documents'), 'ReelSteady Joiner'); //Document path for save processed videos
-const exePath = isDev() ? app.getAppPath() : path.dirname(process.execPath);
-const remotePackageJsonUrl = 'https://raw.githubusercontent.com/rubegartor/ReelSteady-Joiner/master/package.json';
+//Application modules
+const Commons = require(path.join(__dirname, '../src/provider/Commons'));
+const VideoProvider = require(path.join(__dirname, '../src/provider/VideoProcessor'));
+const ChapterGroup = require(path.join(__dirname, '../src/components/ChapterGroup'));
 
 // Javascript interface elements
 const statusElem = document.getElementById('status');
-const selectFileBtn = document.getElementById('selectFiles')
+const selectFileBtn = document.getElementById('selectFiles');
 const processVideosBtn = document.getElementById('processVideos');
-const rawProcessDataElem = document.getElementById('rawProcessData');
 const closeWindowBtn = document.getElementById('closeWindow');
-const updateAvailableLink = document.getElementById('updateAvailable');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsContainer = document.getElementById('settingsWrapper');
+const settingsGoBackBtn = document.getElementById('settingsGoBackBtn');
+const autoScanWrapper = document.getElementById('autoScanWrapperBg');
+const autoScanWrapperCloseBtn = document.getElementById('autoScanWrapperCloseBtn');
+const chapterGroupContinueBtn = document.getElementById('chapterGroupContinueBtn');
+const autoScanOption = document.getElementById('autoScanOption');
+const projectSavePathOption = document.getElementById('projectSavePathOption');
 
-if (!fs.existsSync(path.join(appPath))) {
-    fs.mkdirSync(path.join(appPath));
+// Check for new updates when starting the application
+Commons.checkForUpdates();
+
+let config = remote.getGlobal('globalConfig');
+if (!fs.existsSync(config.savePath)) {
+    config.savePath = path.join(app.getPath('documents'), 'ReelSteady Joiner');
+}
+updateConfigDOM();
+
+// Checks if documents path for saving projects exists
+if (!fs.existsSync(path.join(config.savePath))) {
+    fs.mkdirSync(path.join(config.savePath));
 }
 
-//Check for new updates when starting the application
-checkForUpdates();
-
-let videoFiles = [];
+// Load list of 4 latest projects
+Commons.loadLatestProjects();
 
 closeWindowBtn.addEventListener('click', () => {
     getCurrentWindow().close();
-})
+});
+
+let videoFiles = [];
 
 selectFileBtn.addEventListener('click', () => {
-    dialog.showOpenDialog({
-        properties: ['openFile', 'multiSelections'],
-        filters: [
-            {name: 'MP4 Video', extensions: ['mp4']}
-        ],
-    }).then((result => {
-        if (result.filePaths.length !== 0) {
-            for (let videoFile of result.filePaths) {
-                if (!videoFiles.includes(videoFile)) {
-                    videoFiles.push(videoFile)
-                    appendToTextArea('Loaded video file: ' + path.basename(videoFile));
+    if (!config.autoScan) {
+        dialog.showOpenDialog({
+            properties: ['openFile', 'multiSelections'],
+            filters: [
+                {name: 'MP4 Video', extensions: ['mp4']}
+            ],
+        }).then((result => {
+            if (result.filePaths.length !== 0) {
+                for (let videoFile of result.filePaths) {
+                    if (!videoFiles.includes(videoFile)) {
+                        videoFiles.push(videoFile);
+                    }
                 }
+
+                statusElem.innerText = videoFiles.length + ' videos loaded';
+                statusElem.classList.remove('loading');
+                processVideosBtn.removeAttribute('disabled');
+            } else {
+                processVideosBtn.setAttribute('disabled', 'disabled');
+                statusElem.innerText = 'Waiting files';
+                statusElem.classList.add('loading');
             }
 
+            statusElem.classList.remove('text-success');
+        }));
+    } else {
+        dialog.showOpenDialog({
+            properties: ['openDirectory']
+        }).then((result) => {
+            if (result.filePaths.length !== 0) {
+                let dirPath = result.filePaths[0];
 
-            statusElem.innerText = videoFiles.length + ' videos loaded';
-            statusElem.classList.remove('loading');
-            processVideosBtn.removeAttribute('disabled');
-        } else {
-            rawProcessDataElem.value = '';
-            processVideosBtn.setAttribute('disabled', 'disabled');
-            statusElem.innerText = 'Waiting files';
-            statusElem.classList.add('loading');
-        }
+                try {
+                    let groupContainer = document.getElementById('groupContainer');
+                    groupContainer.innerHTML = '';
+                    let groups = VideoProvider.scanGoProDir(dirPath);
 
-        statusElem.classList.remove('text-success');
-    }));
+                    if (Object.keys(groups).length > 0) {
+                        for (let [key, videoFiles] of Object.entries(groups)) {
+                            let chapterGroup = new ChapterGroup(videoFiles, dirPath);
+                            groupContainer.appendChild(chapterGroup.toHTML());
+                        }
+                    } else {
+                        chapterGroupContinueBtn.style.setProperty('display', 'none');
+                        groupContainer.appendChild(ChapterGroup.toHTMLEmpty());
+                    }
+
+                    autoScanWrapper.style.removeProperty('display');
+                } catch (ex) {
+                    alert(ex.message); //TODO: Replace with new Alert component
+                }
+            }
+        });
+    }
 });
 
 processVideosBtn.addEventListener('click', () => {
     selectFileBtn.setAttribute('disabled', 'disabled');
-    startProcessing(videoFiles);
+    const videoProvider = new VideoProvider;
+    videoProvider.startProcessing(videoFiles);
+    videoFiles = [];
+});
+
+settingsBtn.addEventListener('click', () => {
+    settingsContainer.style.removeProperty('display');
+});
+
+settingsGoBackBtn.addEventListener('click', () => {
+    settingsContainer.style.setProperty('display', 'none');
+});
+
+autoScanOption.addEventListener('change', function () {
+    config.autoScan = this.checked;
+    config.saveConfig();
+});
+
+autoScanWrapperCloseBtn.addEventListener('click', () => {
+    chapterGroupContinueBtn.style.setProperty('display', 'none');
+    autoScanWrapper.style.setProperty('display', 'none');
+});
+
+chapterGroupContinueBtn.addEventListener('click', () => {
+    getChapterGroupsToProcess();
+});
+
+document.getElementById('projectSavePathBtn').addEventListener('click', () => {
+    dialog.showOpenDialog({
+        properties: ['openDirectory']
+    }).then((result) => {
+        if (result.filePaths.length > 0) {
+            config.savePath = result.filePaths[0];
+            config.saveConfig();
+            projectSavePathOption.value = config.savePath;
+
+            Commons.loadLatestProjects();
+        }
+    });
 });
 
 document.addEventListener('click', (event) => {
-    event.preventDefault();
-    let element = event.target;
-    if (element.id === 'openPath') {
-        let millis = element.dataset.path;
-
-        shell.openPath(path.join(appPath, millis));
+    let invalidTags = ['path', 'svg'];
+    if (invalidTags.includes(event.target.tagName)) {
+        return;
     }
 
-    if (element.id === 'openGithub' || element.id === 'updateAvailable') {
-        shell.openExternal(element.getAttribute('href'));
+    if (event.target.className.includes('openPath')) {
+        event.preventDefault();
+        shell.openPath(path.join(config.savePath, event.target.dataset.path));
+    }
+
+    if (event.target.className.includes('openExternal')) {
+        event.preventDefault();
+        shell.openExternal(event.target.getAttribute('href'));
+    }
+
+    if(event.target.name && event.target.name.includes('chapterGroup')) {
+        chapterGroupContinueBtn.style.removeProperty('display');
     }
 });
 
 /**
- * Function that checks if ReelSteady Joiner has new updates
+ * Get selected chapter group
  */
-function checkForUpdates() {
-    rp(remotePackageJsonUrl)
-        .then(function (data) {
-            let packageJson = JSON.parse(data.toString());
-            let repoVersion = packageJson.version;
+function getChapterGroupsToProcess() {
+    let chapterGroups = document.querySelectorAll("[data-type='chapterGroup']");
 
-            if (repoVersion !== version) {
-                updateAvailableLink.style.removeProperty('display');
-            } else {
-                updateAvailableLink.style.setProperty('display', 'none');
+    videoFiles = [];
+
+    for (let chapterGroup of chapterGroups) {
+        if (chapterGroup.checked) {
+            let files = chapterGroup.dataset.files.split(',');
+            let dirPath = chapterGroup.dataset.dirPath;
+
+            for (let file of files) {
+                videoFiles.push(path.join(dirPath, file));
             }
-        });
-}
-
-/**
- * Function that returns if app is packaged or not
- *
- * @returns {boolean}
- */
-function isDev() {
-    return !app.isPackaged;
-}
-
-/**
- * Function for append text into logging textarea
- *
- * @param text
- */
-function appendToTextArea(text) {
-    rawProcessDataElem.value += text + '\n';
-    rawProcessDataElem.scrollTop = rawProcessDataElem.scrollHeight;
-}
-
-/**
- * Function to process all video files
- *
- * @param filePaths array of video files paths
- */
-function startProcessing(filePaths) {
-    rawProcessDataElem.value = '';
-    selectFileBtn.setAttribute('disabled', 'disabled');
-    processVideosBtn.setAttribute('disabled', 'disabled');
-
-    let actDate = new Date;
-    let projectDir = [('0' + actDate.getDate()).slice(-2), ('0' + (actDate.getMonth() + 1)).slice(-2), actDate.getFullYear()].join('-')
-        + ' ' +
-        [('0' + actDate.getHours()).slice(-2), ('0' + actDate.getMinutes()).slice(-2), ('0' + actDate.getSeconds()).slice(-2)].join('_');
-
-    if (!fs.existsSync(path.join(appPath, projectDir.toString()))) {
-        fs.mkdirSync(path.join(appPath, projectDir.toString()));
+        }
     }
 
-    let concatText = '';
-    let filePathsSorted = filePaths.sort();
-
-    for (let filePath of filePathsSorted) {
-        concatText += 'file \'' + filePath + '\'\n';
-        fs.writeFileSync(path.join(appPath, projectDir.toString(), 'concat.txt'), concatText, 'utf-8');
-    }
-
-    let args = [
-        '-y',
-        '-f', 'concat',
-        '-safe', '0',
-        '-i', path.join(appPath, projectDir.toString(), 'concat.txt'),
-        '-c', 'copy',
-        '-map', '0:0',
-        '-map', '0:1',
-        '-map', '0:3',
-        'output.mp4'
-    ];
-
-    let proc = spawn(ffmpegPath, args, {cwd: path.join(appPath, projectDir.toString())});
-
-    proc.stderr.setEncoding('utf8')
-    proc.stderr.on('data', (data) => {
-        statusElem.innerText = 'Processing videos';
-        statusElem.classList.add('loading');
-        appendToTextArea(data);
-    });
-
-    proc.on('close', () => {
-        fs.unlinkSync(path.join(appPath, projectDir.toString(), 'concat.txt')) //The file concat.txt is deleted because it's useless for the user
-        processGyro(projectDir, filePathsSorted);
-    });
+    statusElem.innerText = videoFiles.length + ' videos loaded';
+    statusElem.classList.remove();
+    processVideosBtn.removeAttribute('disabled');
+    autoScanWrapper.style.setProperty('display', 'none');
 }
 
 /**
- * Function to embed the gyroscope data
- *
- * @param projectDir
- * @param filePathsSorted
+ * Update config DOM
  */
-function processGyro(projectDir, filePathsSorted) {
-    appendToTextArea('Processing gyro data...');
-
-    let args = [
-        filePathsSorted[0],
-        'output.mp4'
-    ];
-
-    let gyroProcessPath = isDev() ? path.join(exePath, 'app', 'utils', 'udtacopy.exe') : path.join(exePath, 'resources', 'app', 'utils', 'udtacopy.exe');
-    let proc = spawn(gyroProcessPath, args, {cwd: path.join(appPath, projectDir.toString())});
-
-    proc.on('close', () => {
-        videoFiles = [];
-        appendToTextArea('\nFinished!');
-        statusElem.innerHTML = 'Finished! (<a href="javascript:void(0);" id="openPath" data-path="' + projectDir + '">Open in explorer</a>)';
-        statusElem.classList.add('text-success');
-        statusElem.classList.remove('loading');
-        selectFileBtn.removeAttribute('disabled');
-    });
+function updateConfigDOM() {
+    autoScanOption.checked = config.autoScan;
+    projectSavePathOption.value = config.savePath;
 }

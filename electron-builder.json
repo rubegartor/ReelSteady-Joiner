@@ -2,15 +2,14 @@
   "productName": "ReelSteady Joiner",
   "appId": "org.rubegartor.reelsteady-joiner",
   "artifactName": "${productName}-setup-${version}.${ext}",
+  "compression": "maximum",
   "directories": {
     "output": "builds/"
   },
   "files": [
-    "node_modules/",
-    "package.json",
-    "app/utils/udtacopy.exe",
     "app/templates/index.html",
     "app/assets/style/app.css",
+    "app/src/**/*",
     "app/app.js",
     "index.js",
     "app/assets/images/icn.ico"
@@ -19,6 +18,10 @@
     {
       "from": "app/utils/udtacopy.exe",
       "to": "app/utils/udtacopy.exe"
+    },
+    {
+      "from": "app/utils/exiftool.exe",
+      "to": "app/utils/exiftool.exe"
     }
   ],
   "nsis": {

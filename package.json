@@ -1,6 +1,6 @@
 {
   "name": "reelsteady-joiner",
-  "version": "1.1.0",
+  "version": "1.2.0-beta",
   "description": "ReelSteady joiner join multiple GoPro separate video files into one without losing gyro data",
   "main": "index.js",
   "scripts": {
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "ffmpeg-static": "^4.4.0",
+    "moment": "^2.29.1",
     "request": "^2.88.2",
     "request-promise": "^4.2.6"
   }

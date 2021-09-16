@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self'">
     <title>ReelSteady Joiner</title>
     <link rel="stylesheet" type="text/css" href="../assets/style/app.css">
 </head>
 <body>
+<div class="beta">v1.2.0 BETA VERSION</div>
 <div class="nav"></div>
 <div class="control-box">
     <div class="close" id="closeWindow" title="Close"></div>
@@ -18,6 +18,20 @@
             <span class="subtitle">Select the videos you want to join without losing the gyroscope data</span>
         </div>
         <div class="buttonContainer">
+            <button type="button" class="button-green" id="settingsBtn" style="padding: 0 16px 0 16px;">
+                <svg x="0px" y="0px" width="32" height="32" viewBox="0 0 512 512" xml:space="preserve" style="padding-top: 4px;">
+                <g>
+                    <path d="M462,280.72v-49.44l-46.414-16.48c-3.903-15.098-9.922-29.343-17.675-42.447l0.063-0.064l21.168-44.473l-34.96-34.96
+                            l-44.471,21.167l-0.064,0.064c-13.104-7.753-27.352-13.772-42.447-17.673L280.72,50h-49.44L214.8,96.415
+                            c-15.096,3.9-29.343,9.919-42.447,17.675l-0.064-0.066l-44.473-21.167l-34.96,34.96l21.167,44.473l0.066,0.064
+                            c-7.755,13.104-13.774,27.352-17.675,42.447L50,231.28v49.44l46.415,16.48c3.9,15.096,9.921,29.343,17.675,42.447l-0.066,0.064
+                            l-21.167,44.471l34.96,34.96l44.473-21.168l0.064-0.063c13.104,7.753,27.352,13.771,42.447,17.675L231.28,462h49.44l16.48-46.414
+                            c15.096-3.903,29.343-9.922,42.447-17.675l0.064,0.063l44.471,21.168l34.96-34.96l-21.168-44.471l-0.063-0.064
+                            c7.753-13.104,13.771-27.352,17.675-42.447L462,280.72z M256,338.4c-45.509,0-82.4-36.892-82.4-82.4c0-45.509,36.891-82.4,82.4-82.4
+                            c45.509,0,82.4,36.891,82.4,82.4C338.4,301.509,301.509,338.4,256,338.4z" fill="white"/>
+                </g>
+                </svg>
+            </button>
             <button type="button" class="button-orange" id="selectFiles">Select files</button>
             <button type="button" class="button-green" id="processVideos" disabled>Merge!</button>
         </div>
@@ -26,13 +40,62 @@
                 <strong>Status: </strong><span id="status" class="loading">Waiting files</span>
             </div>
         </div>
-        <div class="rawData">
-            <textarea id="rawProcessData" readonly></textarea>
+    </div>
+    <div class="progress-container">
+        <progress id="progressBar" max="100" value="0" class="progress-orange"></progress>
+    </div>
+    <hr style="margin-top: 25px;">
+    <div class="lastProjectContainer" id="lastProjectContainer"></div>
+    <div class="repo">
+        <a href="https://github.com/rubegartor/ReelSteady-Joiner/releases" class="update-available openExternal" id="updateAvailable" style="display: none;">(Update available)</a>
+        <a href="https://github.com/rubegartor/ReelSteady-Joiner" class="gray-href openExternal">https://github.com/rubegartor/ReelSteady-Joiner</a>
+    </div>
+</div>
+<div id="autoScanWrapperBg" style="display: none;">
+    <div id="autoScanWrapper">
+        <div class="title">Chapters</div>
+        <div class="groupContainer" id="groupContainer"></div>
+        <div class="buttonContainer">
+            <button type="button" class="button-gray" id="autoScanWrapperCloseBtn">Close</button>
+            <button type="button" class="button-green" id="chapterGroupContinueBtn" style="display: none;">Continue</button>
         </div>
     </div>
-    <div class="repo">
-        <a href="https://github.com/rubegartor/ReelSteady-Joiner/releases" id="updateAvailable" class="update-available" style="display: none;">(Update available)</a>
-        <a href="https://github.com/rubegartor/ReelSteady-Joiner" class="gray-href" id="openGithub">https://github.com/rubegartor/ReelSteady-Joiner</a>
+</div>
+<div id="settingsWrapper" style="display: none;">
+    <div class="title">
+        <div class="goBack" id="settingsGoBackBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path d="M16.67 0l2.83 2.829-9.339 9.175 9.339 9.167-2.83 2.829-12.17-11.996z" fill="white"/>
+            </svg>
+        </div>
+        Settings
+    </div>
+    <div class="configLine">
+        <div>
+            <div class="configName">Auto scan mode</div>
+            <div class="configDescription">
+                This mode scan automatically selected directory in search of all video chunks to merge<br>
+                (Only works from GoPro Hero 6)
+            </div>
+        </div>
+        <div>
+            <label class="switch">
+                <input type="checkbox" id="autoScanOption">
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </div>
+    <div class="configLine">
+        <div>
+            <div class="configName">Project save path</div>
+            <div class="configDescription">
+                Where output video files merged are stored
+            </div>
+        </div>
+        <div class="d-flex">
+            <input type="text" id="projectSavePathOption" readonly>
+            <button type="button" class="button-sm button-orange" id="projectSavePathBtn">...</button>
+        </div>
     </div>
 </div>
 </body>

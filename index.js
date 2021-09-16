@@ -1,7 +1,9 @@
-const { app, BrowserWindow } = require('electron')
+const {app, BrowserWindow} = require('electron')
 const path = require('path')
+const moment = require('moment')
+const Config = require(path.join(__dirname, 'app/src/provider/Config'))
 
-function createWindow () {
+function createWindow() {
     const win = new BrowserWindow({
         width: 960,
         height: 600,
@@ -24,6 +26,13 @@ function createWindow () {
 
 app.whenReady().then(() => {
     createWindow()
+
+    let config = new Config()
+    config.loadConfig()
+    global.globalConfig = config
+
+    global.globalMoment = moment;
+    global.globalMoment.locale(app.getLocale());
 })
 
 app.on('window-all-closed', function () {
