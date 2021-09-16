@@ -1,14 +1,17 @@
-const version = '1.2.0';
+const version = '1.2.0-beta';
+const {remote} = require('electron');
 const {app} = require('electron').remote;
 const rp = require('request-promise');
 const path = require('path');
 const fs = require('fs');
 
+const ProjectGroup = require(path.join(__dirname, '../components/ProjectGroup'));
+
 const remotePackageJsonUrl = 'https://raw.githubusercontent.com/rubegartor/ReelSteady-Joiner/master/package.json';
+const config = remote.getGlobal('globalConfig');
+const moment = remote.getGlobal('globalMoment');
 
 module.exports = {
-    documentsPath: path.join(app.getPath('documents'), 'ReelSteady Joiner'), //Document path for save processed videos
-
     /**
      * Function that checks if ReelSteady Joiner has new updates
      */
@@ -46,8 +49,20 @@ module.exports = {
         const lastProjectContainer = document.getElementById('lastProjectContainer');
         lastProjectContainer.innerHTML = '';
 
-        for (let dir of this.getDirectories(this.documentsPath)) {
-            allProjects.push({'dir': dir, 'date': this.strToDate(dir)});
+        for (let dir of this.getDirectories(config.savePath)) {
+            let dirContent = this.readDir(path.join(config.savePath, dir));
+
+            for (let content of dirContent) {
+                try {
+                    let contentStats = fs.statSync(path.join(config.savePath, dir, content));
+                    if (!contentStats.isDirectory()) {
+                        let fileRegex = /^G[{(H|X)}]\d{6}_joined(_\d*)?.(MP4|mp4)/;
+                        if (['.MP4', '.mp4'].includes(path.extname(content)) && fileRegex.test(content)) {
+                            allProjects.push({'dir': dir, 'file': content, 'date': contentStats.mtime});
+                        }
+                    }
+                } catch (e) {}
+            }
         }
 
         allProjects.sort(function (a, b) {
@@ -55,17 +70,7 @@ module.exports = {
         });
 
         for (let project of allProjects.reverse().slice(0, 4)) {
-            let files = this.readDir(path.join(this.documentsPath, project.dir));
-            console.log(files);
-            let row = document.createElement('div');
-            let dtFmt = this.dateToStr(this.strToDate(project.dir), '-', ':');
-            let innerText = files.length > 0 ? files[0] + ' - (' + dtFmt + ')' : '(Empty) - ' + dtFmt;
-
-            row.classList.add('item');
-            row.classList.add('openPath');
-            row.dataset.path = project.dir;
-            row.innerText = innerText;
-            lastProjectContainer.append(row);
+            lastProjectContainer.append(new ProjectGroup(project.dir, project.file).toHTML());
         }
     },
 
@@ -92,27 +97,12 @@ module.exports = {
     },
 
     /**
-     * Function that converts string to date
-     *
-     * @param dateString
-     * @returns {Date}
-     */
-    strToDate(dateString) {
-        let arrDt = dateString.match(/(\d{2})-(\d{2})-(\d{4}) (\d{2})_(\d{2})_(\d{2})/);
-        return new Date(arrDt[3], arrDt[2] - 1, arrDt[1], arrDt[4], arrDt[5], arrDt[6]);
-    },
-
-    /**
      * Function that converts date to string with selected separators
      *
      * @param date
-     * @param dateSeparator
-     * @param timeSeparator
      * @returns {string}
      */
-    dateToStr(date, dateSeparator, timeSeparator) {
-        return [('0' + date.getDate()).slice(-2), ('0' + (date.getMonth() + 1)).slice(-2), date.getFullYear()].join(dateSeparator)
-            + ' ' +
-            [('0' + date.getHours()).slice(-2), ('0' + date.getMinutes()).slice(-2), ('0' + date.getSeconds()).slice(-2)].join(timeSeparator)
+    dateToStr(date) {
+        return moment(date).format('lll').replace(':', '-');
     }
 }

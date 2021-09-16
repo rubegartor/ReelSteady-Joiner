@@ -5,13 +5,13 @@
     --orange: #E67E22;
     --green: #27AE60;
     --gray: #555555;
+    --dark-gray: #323538;
     --light-gray: #ebe5d6;
     --white: #ffffff;
 }
 
 * {
     box-sizing: border-box;
-    margin: 0 auto;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     user-select: none;
 }
@@ -19,6 +19,14 @@
 body {
     background-color: var(--bg);
     -webkit-user-select: none;
+}
+
+.beta {
+    position: absolute;
+    bottom: 5px;
+    left: 10px;
+    font-weight: bold;
+    color: var(--light-gray);
 }
 
 #wrapper {
@@ -59,6 +67,7 @@ body {
     border: none;
     cursor: pointer;
     z-index: 99;
+    box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
 }
 
 .control-box .close:hover {
@@ -76,6 +85,7 @@ button {
     outline: 0;
     border-radius: 3px;
     cursor: pointer;
+    box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
 }
 
 button:hover {
@@ -89,6 +99,10 @@ button:disabled {
     cursor: not-allowed;
 }
 
+.button-sm {
+    padding: 6px 16px !important;
+}
+
 .button-green {
     background-color: var(--green);
 }
@@ -97,19 +111,23 @@ button:disabled {
     background-color: var(--orange);
 }
 
+.button-gray {
+    background-color: var(--gray);
+}
+
 .buttonContainer {
     display: inline-flex;
     margin-top: 15px;
-}
-
-.buttonContainer > * {
-    margin: 0 5px 0 5px;
 }
 
 h1 {
     margin: 30px 0 15px 0;
     color: var(--light-gray);
     font-size: 2.5em;
+}
+
+.d-flex {
+    display: flex;
 }
 
 .subtitle {
@@ -119,6 +137,17 @@ h1 {
 
 #selectFiles, #processVideos, #settingsBtn {
     margin-bottom: 10px;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+#projectSavePathBtn {
+    margin-left: 8px;
+}
+
+#projectSavePathOption {
+    font-size: .8em;
+    width: 350px;
 }
 
 .processDataContainer {
@@ -164,6 +193,8 @@ a:hover {
     display: inline-block;
     width: 48px;
     height: 28px;
+    margin-top: -14px;
+    margin-left: -48px;
 }
 
 .switch input {
@@ -270,6 +301,7 @@ hr {
     padding: 6px 16px 6px 16px;
     border-radius: 3px;
     cursor: pointer;
+    box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
 }
 
 .lastProjectContainer .item:hover {
@@ -279,6 +311,173 @@ hr {
 .loading:after {
     content: '.';
     animation: dots 1s steps(5, end) infinite;
+}
+
+input[type="text"] {
+    background: rgba(99, 110, 114, 0.3);
+    color: var(--light-gray);
+    height: 35px;
+    border: 0;
+    border-radius: 5px;
+    padding: 0 12px;
+    font-size: 0.95rem;
+    outline: 0;
+    box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
+}
+
+::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+select {
+    background-color: var(--gray);
+    border: 0;
+    outline: 0;
+    padding: 10px 100px 10px 20px;
+    border-radius: 5px;
+    background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNSIgaGVpZ2h0PSIyNSIgZmlsbD0ibm9uZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2U9IiNiYmIiPjxwYXRoIGQ9Ik02IDlsNiA2IDYtNiIvPjwvc3ZnPg==) !important;
+    background-repeat: no-repeat !important;
+    background-position-x: 100% !important;
+    background-position-y: 50% !important;
+    -webkit-appearance: none !important;
+    cursor: pointer;
+    font-size: .95em;
+    color: var(--light-gray);
+}
+
+select > option {
+    background-color: var(--gray);
+    color: var(--light-gray);
+}
+
+select::-ms-expand {
+    display: none;
+}
+
+#settingsWrapper {
+    background-color: var(--bg);
+    width: 100%;
+    height: calc(100vh - 40px);
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin-top: 40px;
+    padding: 0 40px 0 40px;
+    color: var(--light-gray)
+}
+
+#settingsWrapper .title {
+    display: flex;
+    font-size: 2em;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--gray);
+    margin-top: -15px;
+    margin-bottom: 20px;
+}
+
+#settingsWrapper .title .goBack {
+    padding-right: 15px;
+    padding-left: 5px;
+    cursor: pointer;
+}
+
+#settingsWrapper .title .goBack:hover {
+    opacity: .8;
+}
+
+#settingsWrapper .configLine {
+    width: 100%;
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+    height: auto;
+    min-height: 50px;
+    padding: 8px 20px 8px 20px;
+    background-color: var(--dark-gray);
+    border-radius: 5px;
+    box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
+}
+
+#settingsWrapper .configLine + .configLine {
+    margin: 10px 0 10px 0;
+}
+
+#settingsWrapper .configLine .configName {
+    font-size: 1.1em;
+    padding-top: 10px;
+}
+
+#settingsWrapper .configLine .configDescription {
+    font-size: .8em;
+    color: var(--gray);
+    margin-left: 3px;
+    padding-top: 6px;
+    padding-bottom: 10px;
+}
+
+#autoScanWrapperBg {
+    background: rgba(0, 0, 0, 0.8);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#autoScanWrapper {
+    background-color: var(--bg);
+    color: var(--light-gray);
+    position: absolute;
+    top: 50%;
+    transform: translateY(-55%) translateX(15%);
+    width: 75%;
+    height: 65%;
+    border-radius: 5px;
+    box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
+    padding: 20px;
+}
+
+#autoScanWrapper .title {
+    font-size: 1.5em;
+    border-bottom: 2px solid var(--gray);
+    padding-bottom: 8px;
+    margin-bottom: 8px;
+}
+
+#autoScanWrapper > .buttonContainer {
+    margin-top: 8px;
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+#autoScanWrapper > .buttonContainer > button + button {
+    margin-left: 10px;
+}
+
+#autoScanWrapper .groupContainer {
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 100%;
+    height: calc(100% - 108px);
+    padding: 10px;
+}
+
+#autoScanWrapper .groupContainer .radioContainer {
+    margin-right: 10px;
+}
+
+#autoScanWrapper .groupContainer .group {
+    background-color: var(--dark-gray);
+    display: flex;
+    width: 100%;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
+}
+
+#autoScanWrapper .groupContainer .group + .group {
+    margin-top: 10px;
 }
 
 @keyframes dots {
@@ -300,4 +499,20 @@ hr {
         text-shadow: .25em 0 0 white,
         .5em 0 0 white;
     }
+}
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }

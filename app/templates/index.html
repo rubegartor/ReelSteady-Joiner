@@ -6,6 +6,7 @@
     <link rel="stylesheet" type="text/css" href="../assets/style/app.css">
 </head>
 <body>
+<div class="beta">v1.2.0 BETA VERSION</div>
 <div class="nav"></div>
 <div class="control-box">
     <div class="close" id="closeWindow" title="Close"></div>
@@ -48,6 +49,53 @@
     <div class="repo">
         <a href="https://github.com/rubegartor/ReelSteady-Joiner/releases" class="update-available openExternal" id="updateAvailable" style="display: none;">(Update available)</a>
         <a href="https://github.com/rubegartor/ReelSteady-Joiner" class="gray-href openExternal">https://github.com/rubegartor/ReelSteady-Joiner</a>
+    </div>
+</div>
+<div id="autoScanWrapperBg" style="display: none;">
+    <div id="autoScanWrapper">
+        <div class="title">Chapters</div>
+        <div class="groupContainer" id="groupContainer"></div>
+        <div class="buttonContainer">
+            <button type="button" class="button-gray" id="autoScanWrapperCloseBtn">Close</button>
+            <button type="button" class="button-green" id="chapterGroupContinueBtn" style="display: none;">Continue</button>
+        </div>
+    </div>
+</div>
+<div id="settingsWrapper" style="display: none;">
+    <div class="title">
+        <div class="goBack" id="settingsGoBackBtn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path d="M16.67 0l2.83 2.829-9.339 9.175 9.339 9.167-2.83 2.829-12.17-11.996z" fill="white"/>
+            </svg>
+        </div>
+        Settings
+    </div>
+    <div class="configLine">
+        <div>
+            <div class="configName">Auto scan mode</div>
+            <div class="configDescription">
+                This mode scan automatically selected directory in search of all video chunks to merge<br>
+                (Only works from GoPro Hero 6)
+            </div>
+        </div>
+        <div>
+            <label class="switch">
+                <input type="checkbox" id="autoScanOption">
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </div>
+    <div class="configLine">
+        <div>
+            <div class="configName">Project save path</div>
+            <div class="configDescription">
+                Where output video files merged are stored
+            </div>
+        </div>
+        <div class="d-flex">
+            <input type="text" id="projectSavePathOption" readonly>
+            <button type="button" class="button-sm button-orange" id="projectSavePathBtn">...</button>
+        </div>
     </div>
 </div>
 </body>

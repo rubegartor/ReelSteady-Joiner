@@ -6,10 +6,10 @@ const CONFIG_FILE = 'config.json';
 const CONFIG_DIR = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner');
 
 class Config {
-    static DEFAULT_CONFIG = 'default';
-
     constructor() {
-        this.projectName = Config.DEFAULT_CONFIG;
+        // noinspection JSUnusedGlobalSymbols
+        this.autoScan = false;
+        this.savePath = '';
     }
 
     loadConfig() {
@@ -25,7 +25,7 @@ class Config {
             let jsonData = JSON.parse(data);
 
             for (let key in jsonData) {
-                if (jsonData.hasOwnProperty(key)) {
+                if (jsonData.hasOwnProperty(key) && typeof this[key] !== 'undefined') {
                     this[key] = jsonData[key];
                 }
             }
