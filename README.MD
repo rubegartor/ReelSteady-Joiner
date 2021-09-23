@@ -56,6 +56,8 @@ npm dependencies listed in package.json
 * [exiftool](https://exiftool.org/) - ExifTool
 * [GoProLabs](https://gopro.github.io/labs/) - GoProLabs utils
 
+ReelSteady Joiner is only a wrapper application for GoProLabs "udtacopy" feature, thanks to dnewman-gpsw and GoProLabs for creating udtacopy.
+
 ## Authors ✒️
 
 * **Rubén García** - [rubegartor](https://github.com/rubegartor)
