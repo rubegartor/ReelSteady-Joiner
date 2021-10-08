@@ -12,17 +12,7 @@
     "app/src/**/*",
     "app/app.js",
     "index.js",
-    "app/assets/images/icn.ico"
-  ],
-  "extraResources": [
-    {
-      "from": "app/utils/udtacopy.exe",
-      "to": "app/utils/udtacopy.exe"
-    },
-    {
-      "from": "app/utils/exiftool.exe",
-      "to": "app/utils/exiftool.exe"
-    }
+    "app/assets/images/*"
   ],
   "nsis": {
     "installerIcon": "app/assets/images/icn.ico",
@@ -31,9 +21,13 @@
   },
   "win": {
     "icon": "app/assets/images/icn.ico",
-    "target":[
+    "target": [
       "nsis",
       "msi"
+    ],
+    "extraFiles": [
+      "app/bin/win/**",
+      "app/bin/exiftool.config"
     ]
   }
 }

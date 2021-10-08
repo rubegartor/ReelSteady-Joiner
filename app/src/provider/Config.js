@@ -2,6 +2,8 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 
+const ConfigSaveError = require(path.join(__dirname, '../exceptions/ConfigSaveError'));
+
 const CONFIG_FILE = 'config.json';
 const CONFIG_DIR = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner');
 
@@ -18,7 +20,11 @@ class Config {
         }
 
         if (!fs.existsSync(path.join(CONFIG_DIR, CONFIG_FILE))) {
-            fs.writeFile(path.join(CONFIG_DIR, CONFIG_FILE), JSON.stringify(this), () => {});
+            fs.writeFile(path.join(CONFIG_DIR, CONFIG_FILE), JSON.stringify(this), (err) => {
+                if (!err) {
+                    throw new ConfigSaveError('Unable to save settings');
+                }
+            });
         }
 
         fs.readFile(path.join(CONFIG_DIR, CONFIG_FILE), 'utf8', (err, data) => {
@@ -33,7 +39,11 @@ class Config {
     }
 
     saveConfig() {
-        fs.writeFile(path.join(CONFIG_DIR, CONFIG_FILE), JSON.stringify(this), () => {});
+        fs.writeFile(path.join(CONFIG_DIR, CONFIG_FILE), JSON.stringify(this), (err) => {
+            if (err) {
+                throw new ConfigSaveError('Unable to save settings');
+            }
+        });
     }
 }
 
