@@ -4,8 +4,10 @@
     --dark-red: #c0392b;
     --orange: #E67E22;
     --green: #27AE60;
+    --blue: #3787c7;
     --gray: #555555;
     --dark-gray: #323538;
+    --medium-gray: #696969;
     --light-gray: #ebe5d6;
     --white: #ffffff;
 }
@@ -19,14 +21,6 @@
 body {
     background-color: var(--bg);
     -webkit-user-select: none;
-}
-
-.beta {
-    position: absolute;
-    bottom: 5px;
-    left: 10px;
-    font-weight: bold;
-    color: var(--light-gray);
 }
 
 #wrapper {
@@ -103,6 +97,10 @@ button:disabled {
     padding: 6px 16px !important;
 }
 
+.text-sm {
+    font-size: .95rem;
+}
+
 .button-green {
     background-color: var(--green);
 }
@@ -161,7 +159,7 @@ h1 {
     color: var(--white);
 }
 
-.text-success, .update-available {
+.text-success {
     color: var(--green);
 }
 
@@ -174,18 +172,16 @@ a:hover {
     text-decoration: underline;
 }
 
-.gray-href {
-    text-decoration: none;
-    color: var(--gray);
-    font-weight: normal;
-}
-
 .repo {
     position: absolute;
     bottom: 15px;
     right: 25px;
     font-weight: bold;
     color: var(--gray);
+}
+
+.repo img + img {
+    margin-left: 8px;
 }
 
 .switch {
@@ -275,6 +271,11 @@ progress.progress-orange[value]::-webkit-progress-value {
 
 progress.progress-green[value]::-webkit-progress-value {
     background-color: var(--green);
+    border-radius: 15px;
+}
+
+progress.progress-red[value]::-webkit-progress-value {
+    background-color: var(--red);
     border-radius: 15px;
 }
 
@@ -399,7 +400,7 @@ select::-ms-expand {
 }
 
 #settingsWrapper .configLine + .configLine {
-    margin: 10px 0 10px 0;
+    margin-top: 10px;
 }
 
 #settingsWrapper .configLine .configName {
@@ -409,7 +410,7 @@ select::-ms-expand {
 
 #settingsWrapper .configLine .configDescription {
     font-size: .8em;
-    color: var(--gray);
+    color: var(--medium-gray);
     margin-left: 3px;
     padding-top: 6px;
     padding-bottom: 10px;
@@ -478,6 +479,88 @@ select::-ms-expand {
 
 #autoScanWrapper .groupContainer .group + .group {
     margin-top: 10px;
+}
+
+#alertContainer {
+    display: flex;
+    flex-flow: wrap;
+    justify-content: flex-end;
+    position: absolute;
+    width: auto;
+    max-width: 400px;
+    height: auto;
+    max-height: calc(100% - 50px);
+    right: 25px;
+    top: 50px;
+    z-index: 99;
+}
+
+.alert {
+    position: relative;
+    width: 400px;
+    height: auto;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
+    transition: opacity 0.5s linear;
+}
+
+.alert a {
+    color: white;
+    text-decoration: underline;
+}
+
+.alert + .alert {
+    margin-top: 10px;
+}
+
+.alert-hide {
+    opacity: 0;
+}
+
+.alert-danger {
+    background-color: var(--red);
+    color: var(--white);
+}
+
+.alert-success {
+    background-color: var(--green);
+    color: var(--white);
+}
+
+.alert-info {
+    background-color: var(--blue);
+    color: var(--white);
+}
+
+.alert-close {
+    position: absolute;
+    top: 2px;
+    right: 10px;
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+
+.alert-close:hover {
+    filter: brightness(0.70);
+}
+
+.openExternal {
+    cursor: pointer;
+}
+
+img.openExternal:hover {
+    opacity: .8;
+}
+
+.blink {
+    animation: blinker 3s linear infinite;
+}
+
+@keyframes blinker {
+    50% {
+        opacity: 0;
+    }
 }
 
 @keyframes dots {

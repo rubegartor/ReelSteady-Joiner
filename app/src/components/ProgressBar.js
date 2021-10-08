@@ -1,18 +1,19 @@
-const {exec} = require('child_process');
-const ffmpegPath = require('ffmpeg-static').replace(
-    'app.asar',
-    'app.asar.unpacked'
-);
-
 class ProgressBar {
     static COLOR_ORANGE = 'progress-orange';
     static COLOR_GREEN = 'progress-green';
+    static COLOR_RED = 'progress-red';
 
     constructor(elem) {
         this._elem = elem;
-        this._value = 0;
-        this._maximum = 100;
-        this._color = ProgressBar.COLOR_ORANGE;
+        this._value = elem.value;
+        this._maximum = elem.max;
+
+        for (let clss of this._elem.classList) {
+            if (clss.includes('progress-')) {
+                this._color = clss;
+                break;
+            }
+        }
     }
 
     get value() {
@@ -46,40 +47,6 @@ class ProgressBar {
 
         this._color = color;
         this._elem.classList.add(color);
-    }
-
-    /**
-     * Function that get total duration of all selected files
-     *
-     * @param videoFiles
-     * @returns {Promise<number>}
-     */
-    getTotalVidDuration(videoFiles) {
-        let promises = [];
-        for (let vidFile of videoFiles) {
-            let prom = new Promise(function (resolve) {
-                let cmd = '"' + ffmpegPath + '" -i "' + vidFile + '"';
-                exec(cmd, function (error, stdout, stderr) {
-                    let output = stderr.substr(stderr.indexOf('Duration:') + 9, stderr.length);
-                    resolve(output.substr(0, output.indexOf(',')));
-                });
-            });
-
-            promises.push(prom);
-        }
-
-        return Promise.all(promises).then((values) => {
-            let secs = 0;
-
-            for (let time of values) {
-                let parsedTime = time.trim().replace('\r\n', '').split(':');
-                secs += parsedTime[0] * 3600;
-                secs += parsedTime[1] * 60;
-                secs += parseInt(parsedTime[2]);
-            }
-
-            return secs;
-        });
     }
 
     /**

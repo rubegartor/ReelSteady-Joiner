@@ -1,4 +1,4 @@
-const version = '1.2.0-beta';
+const version = '1.2.0';
 const {remote} = require('electron');
 const {app} = require('electron').remote;
 const rp = require('request-promise');
@@ -6,8 +6,10 @@ const path = require('path');
 const fs = require('fs');
 
 const ProjectGroup = require(path.join(__dirname, '../components/ProjectGroup'));
+const Alert = require(path.join(__dirname, '../components/Alert'));
 
 const remotePackageJsonUrl = 'https://raw.githubusercontent.com/rubegartor/ReelSteady-Joiner/master/package.json';
+const githubReleasesPage = 'https://github.com/rubegartor/ReelSteady-Joiner/releases';
 const config = remote.getGlobal('globalConfig');
 const moment = remote.getGlobal('globalMoment');
 
@@ -16,17 +18,19 @@ module.exports = {
      * Function that checks if ReelSteady Joiner has new updates
      */
     checkForUpdates: function () {
-        let updateAvailableLink = document.getElementById('updateAvailable');
-
         rp(remotePackageJsonUrl)
             .then(function (data) {
                 let packageJson = JSON.parse(data.toString());
                 let repoVersion = packageJson.version;
 
                 if (repoVersion !== version) {
-                    updateAvailableLink.style.removeProperty('display');
-                } else {
-                    updateAvailableLink.style.setProperty('display', 'none');
+                    let alertBody = 'Update available, <a href="' + githubReleasesPage + '" class="openExternal">click for download</a>';
+                    let alert = new Alert(alertBody, Alert.ALERT_INFO, 0);
+                    alert.width = '315px';
+                    alert.onRemove = function () {
+                        document.getElementById('updateLink').style.removeProperty('display');
+                    };
+                    Alert.appendToContainer(alert.toHTML());
                 }
             });
     },
@@ -61,12 +65,20 @@ module.exports = {
                             allProjects.push({'dir': dir, 'file': content, 'date': contentStats.mtime});
                         }
                     }
-                } catch (e) {}
+                } catch (e) {
+                    //Errors omitted like EPERM, EBUSY, etc.
+                }
             }
         }
 
+        //Sort by modify datetime
         allProjects.sort(function (a, b) {
             return a.date - b.date;
+        });
+
+        //Sort by number of filename
+        allProjects.sort(function (a, b) {
+            return parseInt(a.file.split('_')[2]) - parseInt(b.file.split('_')[2]);
         });
 
         for (let project of allProjects.reverse().slice(0, 4)) {
@@ -82,7 +94,14 @@ module.exports = {
      */
     getDirectories: function (sysPath) {
         return fs.readdirSync(sysPath).filter(function (file) {
-            return fs.statSync(path.join(sysPath, file)).isDirectory();
+            let isDir = false;
+            try {
+                isDir = fs.statSync(path.join(sysPath, file)).isDirectory();
+            } catch (e) {
+                //Errors omitted like EPERM, EBUSY, etc.
+            }
+
+            return isDir;
         });
     },
 
@@ -93,16 +112,49 @@ module.exports = {
      * @returns {string[]}
      */
     readDir: function (dir) {
-        return fs.readdirSync(dir);
+        let dirContent = [];
+
+        try {
+            dirContent = fs.readdirSync(dir)
+        } catch (e) {
+            //Errors omitted like EPERM, EBUSY, etc.
+        }
+
+        return dirContent;
     },
 
     /**
-     * Function that converts date to string with selected separators
+     * Function that converts date to string
      *
      * @param date
      * @returns {string}
      */
     dateToStr(date) {
-        return moment(date).format('lll').replace(':', '-');
+        return moment(date).format('lll');
+    },
+
+    /**
+     * Resets UI to default status
+     */
+    resetStatus() {
+        const statusElem = document.getElementById('status');
+        const processVideosBtn = document.getElementById('processVideos');
+        const selectFileBtn = document.getElementById('selectFiles');
+
+        processVideosBtn.setAttribute('disabled', 'disabled');
+        statusElem.innerText = 'Waiting files';
+        statusElem.classList.add('loading');
+        selectFileBtn.removeAttribute('disabled');
+    },
+
+    /**
+     * Function that removes a file if exists
+     * @param path
+     */
+    unlinkIfExists(path) {
+        let exists = fs.existsSync(path);
+        if (exists) fs.unlinkSync(path);
+
+        return exists;
     }
 }

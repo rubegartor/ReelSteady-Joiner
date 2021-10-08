@@ -1,18 +1,28 @@
 const {app, dialog, getCurrentWindow} = require('electron').remote;
 const {shell, remote} = require('electron');
+const os = require('os');
 const fs = require('fs');
 const path = require('path');
+require(path.join(__dirname, '../src/provider/Unhandled'));
+
+const closeWindowBtn = document.getElementById('closeWindow');
+closeWindowBtn.addEventListener('click', () => {
+    getCurrentWindow().close();
+});
 
 //Application modules
 const Commons = require(path.join(__dirname, '../src/provider/Commons'));
 const VideoProvider = require(path.join(__dirname, '../src/provider/VideoProcessor'));
 const ChapterGroup = require(path.join(__dirname, '../src/components/ChapterGroup'));
+const Alert = require(path.join(__dirname, '../src/components/Alert'));
+
+//Exceptions
+const NotConsecutiveChaptersError = require(path.join(__dirname, '../src/exceptions/NotConsecutiveChaptersError'));
 
 // Javascript interface elements
 const statusElem = document.getElementById('status');
 const selectFileBtn = document.getElementById('selectFiles');
 const processVideosBtn = document.getElementById('processVideos');
-const closeWindowBtn = document.getElementById('closeWindow');
 const settingsBtn = document.getElementById('settingsBtn');
 const settingsContainer = document.getElementById('settingsWrapper');
 const settingsGoBackBtn = document.getElementById('settingsGoBackBtn');
@@ -21,6 +31,7 @@ const autoScanWrapperCloseBtn = document.getElementById('autoScanWrapperCloseBtn
 const chapterGroupContinueBtn = document.getElementById('chapterGroupContinueBtn');
 const autoScanOption = document.getElementById('autoScanOption');
 const projectSavePathOption = document.getElementById('projectSavePathOption');
+const openLogsPathBtn = document.getElementById('openLogsPathBtn');
 
 // Check for new updates when starting the application
 Commons.checkForUpdates();
@@ -28,6 +39,7 @@ Commons.checkForUpdates();
 let config = remote.getGlobal('globalConfig');
 if (!fs.existsSync(config.savePath)) {
     config.savePath = path.join(app.getPath('documents'), 'ReelSteady Joiner');
+    config.saveConfig();
 }
 updateConfigDOM();
 
@@ -38,10 +50,6 @@ if (!fs.existsSync(path.join(config.savePath))) {
 
 // Load list of 4 latest projects
 Commons.loadLatestProjects();
-
-closeWindowBtn.addEventListener('click', () => {
-    getCurrentWindow().close();
-});
 
 let videoFiles = [];
 
@@ -95,7 +103,11 @@ selectFileBtn.addEventListener('click', () => {
 
                     autoScanWrapper.style.removeProperty('display');
                 } catch (ex) {
-                    alert(ex.message); //TODO: Replace with new Alert component
+                    if (ex instanceof NotConsecutiveChaptersError) {
+                        Alert.appendToContainer(new Alert(ex.message, Alert.ALERT_DANGER, 5000).toHTML());
+                    } else {
+                        throw ex;
+                    }
                 }
             }
         });
@@ -131,6 +143,10 @@ chapterGroupContinueBtn.addEventListener('click', () => {
     getChapterGroupsToProcess();
 });
 
+openLogsPathBtn.addEventListener('click', () => {
+    shell.openPath(path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner', 'logs'));
+});
+
 document.getElementById('projectSavePathBtn').addEventListener('click', () => {
     dialog.showOpenDialog({
         properties: ['openDirectory']
@@ -161,7 +177,7 @@ document.addEventListener('click', (event) => {
         shell.openExternal(event.target.getAttribute('href'));
     }
 
-    if(event.target.name && event.target.name.includes('chapterGroup')) {
+    if (event.target.name && event.target.name.includes('chapterGroup')) {
         chapterGroupContinueBtn.style.removeProperty('display');
     }
 });
@@ -186,7 +202,7 @@ function getChapterGroupsToProcess() {
     }
 
     statusElem.innerText = videoFiles.length + ' videos loaded';
-    statusElem.classList.remove();
+    statusElem.classList.remove('loading', 'text-success');
     processVideosBtn.removeAttribute('disabled');
     autoScanWrapper.style.setProperty('display', 'none');
 }
