@@ -2,11 +2,11 @@
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/donate?hosted_button_id=P9JH3CF5DHEJW)
 
-_Join your video files extracted from GoPro without losing quality or gyroscope data, then stabilize it with ReelSteady_
+_Merge your video files extracted from GoPro without losing quality or gyroscope data, then stabilize it with ReelSteady_
 
-_Perfect for long videos like long range drone footage_ 
+_Perfect for long videos like long range drone footage_
 
-_**INFO**: At the moment only available for use on Windows (working on MacOS support)_
+Supported on **Windows** & **MacOS**
 
 ## Starting 🚀
 
@@ -20,21 +20,27 @@ _Download and execute installer (**[Releases tab](https://github.com/rubegartor/
 
 2. Select all of your mp4 files to concatenate (Normally 4GB chunks or less) and start merge process
    1. AutoScan Option let you find chapters easily
-   
+
 ![Select files](https://i.imgur.com/Bv18QPR.png)
 ![Select files](https://i.imgur.com/iXB6pzW.png)
-   
+
 
 3. Let ReelSteady Joiner work and combine all the videos selected
 
 ![Processing videos](https://i.imgur.com/DN27x4R.png)
-   
+
 
 4. Check the output video file and stabilize it with ReelSteady
 
 ![Finished](https://i.imgur.com/rx6jk6W.png)
 
 **Warning**: If you process parts that do not belong to the same run, the final video file will be corrupted (this will not happen with auto scan option enabled)
+
+### Troubleshooting 🔎
+_(Known issues)_
+
+- If you are running ReelSteady Joiner on macOS you will need to give security permissions to udtacopy first time you use it.
+  Popup will appear, go System Preferences > Security & privacy and click button: Open anyway.
 
 ### Update ReelSteady Joiner ⚙️
 

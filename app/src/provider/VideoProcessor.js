@@ -5,22 +5,39 @@ const {remote} = require('electron');
 const {spawn, execFile, exec} = require('child_process');
 const Commons = require(path.join(__dirname, '../provider/Commons'));
 const fs = require('fs');
-const os = require('os');
 const ffmpegPath = require('ffmpeg-static').replace(
     'app.asar',
     'app.asar.unpacked'
 );
 
+//Exceptions
+const NotConsecutiveChaptersError = require(path.join(__dirname, '../exceptions/NotConsecutiveChaptersError'));
+
 const config = remote.getGlobal('globalConfig');
 const exePath = Commons.isDev() ? app.getAppPath() : path.dirname(process.execPath);
-const gyroProcessPath = path.join(exePath, 'app', 'bin', 'win', 'udtacopy.exe');
-const exiftool = path.join(exePath, 'app', 'bin', 'win', 'exiftool.exe');
+const macExePath = path.join(app.getAppPath(), '..', '..');
+
 const exifToolConfigPath = path.join(exePath, 'app', 'bin', 'exiftool.config');
+let gyroProcessPath = undefined;
+let exiftool = undefined;
+
+switch (remote.getGlobal('platform')) {
+    case 'darwin':
+        gyroProcessPath = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'udtacopy') : path.join(macExePath, 'app', 'bin', 'mac', 'udtacopy');
+        exiftool = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'exiftool', 'exiftool') : path.join(macExePath, 'app', 'bin', 'mac', 'exiftool', 'exiftool');
+
+        //Give execution permissions to utilities
+        fs.chmodSync(gyroProcessPath, 0o755);
+        fs.chmodSync(exiftool, 0o755);
+        break;
+    case 'win32':
+        gyroProcessPath = path.join(exePath, 'app', 'bin', 'win', 'udtacopy.exe');
+        exiftool = path.join(exePath, 'app', 'bin', 'win', 'exiftool.exe');
+        break;
+}
 
 const ProgressBar = require(path.join(__dirname, '../components/ProgressBar'));
 const Alert = require(path.join(__dirname, '../components/Alert'));
-
-const NotConsecutiveChaptersError = require(path.join('../exceptions/NotConsecutiveChaptersError'));
 
 class VideoProcessor {
     statusElem = document.getElementById('status');
@@ -34,6 +51,7 @@ class VideoProcessor {
 
     //Flags
     ffmpegBreak = false
+    udtacopyBreak = false
 
     /**
      * Function to process all video files
@@ -44,12 +62,8 @@ class VideoProcessor {
         //Calculate log path and filename
         let now = new Date();
         let logName = (Commons.dateToStr(now) + '.log').replace(':', '-');
-        let logPathBase = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner', 'logs');
+        let logPathBase = remote.getGlobal('globalLogPathBase');
         let logPath = path.join(logPathBase, logName);
-
-        if (!fs.existsSync(logPathBase)) {
-            fs.mkdirSync(logPathBase);
-        }
 
         log.transports.file.resolvePath = () => logPath;
 
@@ -144,6 +158,7 @@ class VideoProcessor {
                     outputName
                 ];
 
+                // noinspection JSCheckFunctionSignatures
                 let proc = spawn(ffmpegPath, args, {cwd: path.join(config.savePath, projectDir)});
 
                 log.debug('FFmpeg cwd: ' + path.join(config.savePath, projectDir))
@@ -223,13 +238,16 @@ class VideoProcessor {
      */
     processGyro(outputName, projectDir, firstVideo) {
         let args = [firstVideo, outputName];
+        // noinspection JSCheckFunctionSignatures
         let proc = spawn(gyroProcessPath, args, {cwd: path.join(config.savePath, projectDir)});
 
         log.debug('Udtacopy cwd: ' + path.join(config.savePath, projectDir))
         log.debug('Udtacopy proc object: ' + JSON.stringify(proc));
 
         proc.stderr.on('data', (data) => {
-            log.debug('Udtacopy stderr data: ' + data);
+            proc.kill();
+            this.udtacopyBreak = true;
+            log.error('Udtacopy stderr data: ' + data);
         });
 
         proc.stdout.on('data', (data) => {
@@ -238,8 +256,24 @@ class VideoProcessor {
 
         proc.on('close', () => {
             log.debug('Udtacopy processing finished');
-            log.debug('Starting metadata file editing');
-            this.setCustomMetadata(firstVideo, path.join(config.savePath, projectDir, outputName), projectDir);
+
+            //Checks if udtacopy throws error
+            if (!this.udtacopyBreak) {
+                log.debug('Starting metadata file editing');
+                this.setCustomMetadata(firstVideo, path.join(config.savePath, projectDir, outputName), projectDir);
+            } else {
+                this.progressBar.color = ProgressBar.COLOR_RED;
+                Alert.appendToContainer(new Alert('Gyro data could not be processed', Alert.ALERT_DANGER, 0).toHTML());
+                Commons.unlinkIfExists(path.join(config.savePath, projectDir, outputName)); //Remove not completed output video file
+
+                //Remove project dir if it's empty
+                let invalidProjectDir = path.join(config.savePath, projectDir);
+                if (fs.existsSync(invalidProjectDir) && !Commons.readDir(invalidProjectDir).length) {
+                    fs.rmdirSync(path.join(config.savePath, projectDir));
+                }
+
+                Commons.resetStatus();
+            }
         });
     }
 
@@ -251,6 +285,7 @@ class VideoProcessor {
      */
     getModifiedDate(firstVideo) {
         return new Promise((resolve, reject) => {
+            // noinspection JSCheckFunctionSignatures
             execFile(exiftool, ['-config', exifToolConfigPath, '-s', '-s', '-s', '-time:FileModifyDate', firstVideo], (error, stdout, stderr) => {
                 error ? reject({'error': error, 'stderr': stderr}) : resolve(stdout);
             });
@@ -267,6 +302,7 @@ class VideoProcessor {
     setCustomMetadata(firstVideo, outputVideo, projectDir) {
         log.debug('Getting modifiedDate and persisting into the output file');
         this.getModifiedDate(firstVideo).then((date) => {
+            // noinspection JSCheckFunctionSignatures
             execFile(exiftool, [
                 '-config',
                 exifToolConfigPath,
@@ -299,13 +335,12 @@ class VideoProcessor {
         for (let vidFile of videoFiles) {
             let prom = new Promise(function (resolve, reject) {
                 let cmd = '"' + ffmpegPath + '" -i "' + vidFile + '"';
-                log.debug('Getting video duration of: ' + vidFile);
                 exec(cmd, function (error, stdout, stderr) {
                     if (stderr.includes('Duration:')) {
                         //Here can't handle exceptions easily because output is really an error :D
                         let output = stderr.substr(stderr.indexOf('Duration:') + 9, stderr.length);
                         let duration = output.substr(0, output.indexOf(','));
-                        log.debug('Duration: ' + duration);
+                        log.debug('Duration (' + vidFile + '): ' + duration);
                         resolve(duration);
                     } else {
                         reject({'error': error, 'stderr': stderr});

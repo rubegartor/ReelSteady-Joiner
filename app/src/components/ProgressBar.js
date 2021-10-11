@@ -62,7 +62,7 @@ class ProgressBar {
 
         secs += parsedTime[0] * 3600;
         secs += parsedTime[1] * 60;
-        secs += parseInt(parsedTime[2])
+        secs += parseInt(parsedTime[2]);
 
         return secs;
     }

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ReelSteady Joiner</title>
+    <link rel="stylesheet" type="text/css" href="../assets/style/app.css">
+</head>
+<body>
+<div class="nav"></div>
+<div class="control-box">
+    <div class="close" id="closeWindow" title="Close"></div>
+</div>
+<div id="wrapper">
+    <div id="alertContainer"></div>
+    <div class="centerContainer">
+        <div>
+            <h1>ReelSteady Joiner</h1>
+            <span class="subtitle">Select the videos you want to merge without losing the gyroscope data</span>
+        </div>
+        <div class="buttonContainer">
+            <button type="button" class="button-green" id="settingsBtn" style="padding: 0 16px 0 16px;">
+                <img src="../../app/assets/images/settings.svg" alt="" style="padding-top: 4px;"/>
+            </button>
+            <button type="button" class="button-orange" id="selectFiles">Select files</button>
+            <button type="button" class="button-green" id="processVideos" disabled>Merge!</button>
+        </div>
+        <div class="processDataContainer">
+            <div>
+                <strong>Status: </strong><span id="status" class="loading">Waiting files</span>
+            </div>
+        </div>
+    </div>
+    <div class="progress-container">
+        <progress id="progressBar" max="100" value="0" class="progress-orange"></progress>
+    </div>
+    <hr style="margin-top: 25px;">
+    <div class="lastProjectContainer" id="lastProjectContainer"></div>
+    <div class="repo">
+        <img href="https://github.com/rubegartor/ReelSteady-Joiner/releases" src="../../app/assets/images/update.svg"
+             alt="" class="openExternal blink" style="display: none;" title="Update" id="updateLink"/>
+        <img href="https://github.com/rubegartor/ReelSteady-Joiner" src="../../app/assets/images/github.svg" alt=""
+             class="openExternal" title="Github page"/>
+    </div>
+</div>
+<div id="autoScanWrapperBg" style="display: none;">
+    <div id="autoScanWrapper">
+        <div class="title">Chapters</div>
+        <div class="groupContainer" id="groupContainer"></div>
+        <div class="buttonContainer">
+            <button type="button" class="button-gray" id="autoScanWrapperCloseBtn">Close</button>
+            <button type="button" class="button-green" id="chapterGroupContinueBtn" style="display: none;">Continue
+            </button>
+        </div>
+    </div>
+</div>
+<div id="settingsWrapper" style="display: none;">
+    <div class="title">
+        <div class="goBack" id="settingsGoBackBtn">
+            <img src="../../app/assets/images/caret-left.svg" alt="Go back"/>
+        </div>
+        Settings
+    </div>
+    <div class="configLine">
+        <div>
+            <div class="configName">Auto scan mode</div>
+            <div class="configDescription">
+                This mode scan automatically selected directory in search of all video chunks to merge<br>
+                (Only works from GoPro Hero 6)
+            </div>
+        </div>
+        <div>
+            <label class="switch">
+                <input type="checkbox" id="autoScanOption">
+                <span class="slider round"></span>
+            </label>
+        </div>
+    </div>
+    <div class="configLine">
+        <div>
+            <div class="configName">Project save path</div>
+            <div class="configDescription">
+                Where output video files merged are stored
+            </div>
+        </div>
+        <div class="d-flex">
+            <input type="text" id="projectSavePathOption" readonly>
+            <button type="button" class="button-sm button-orange" id="projectSavePathBtn">...</button>
+        </div>
+    </div>
+    <div class="configLine">
+        <div>
+            <div class="configName">Logs</div>
+            <div class="configDescription">
+                Open the path where the logs are stored
+            </div>
+        </div>
+        <div class="d-flex">
+            <button type="button" class="button-sm text-sm button-orange" id="openLogsPathBtn">Open logs</button>
+        </div>
+    </div>
+</div>
+</body>
+<script src="../app.js"></script>
+</html>
