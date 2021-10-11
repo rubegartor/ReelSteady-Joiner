@@ -7,7 +7,6 @@
     "output": "builds/"
   },
   "files": [
-    "app/templates/index.html",
     "app/assets/style/app.css",
     "app/src/**/*",
     "app/app.js",
@@ -20,6 +19,9 @@
     "deleteAppDataOnUninstall": true
   },
   "win": {
+    "files": [
+      "app/templates/index-win.html"
+    ],
     "icon": "app/assets/images/icn.ico",
     "target": [
       "nsis",
@@ -27,6 +29,17 @@
     ],
     "extraFiles": [
       "app/bin/win/**",
+      "app/bin/exiftool.config"
+    ]
+  },
+  "mac": {
+    "files": [
+      "app/templates/index-mac.html"
+    ],
+    "target": "dmg",
+    "icon": "app/assets/images/icon.png",
+    "extraFiles": [
+      "app/bin/mac/**",
       "app/bin/exiftool.config"
     ]
   }

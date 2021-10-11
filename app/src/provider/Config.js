@@ -5,7 +5,10 @@ const fs = require('fs');
 const ConfigSaveError = require(path.join(__dirname, '../exceptions/ConfigSaveError'));
 
 const CONFIG_FILE = 'config.json';
-const CONFIG_DIR = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner');
+const CONFIG_DIR_WIN = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner');
+const CONFIG_DIR_MAC = path.join(os.homedir(), '.reelsteady-joiner');
+
+const CONFIG_DIR = os.platform() === 'darwin' ? CONFIG_DIR_MAC : CONFIG_DIR_WIN;
 
 class Config {
     constructor() {

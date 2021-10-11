@@ -38,6 +38,7 @@ body {
     left: 0;
     width: 100%;
     height: 45px;
+    /* noinspection CssUnknownProperty */
     -webkit-app-region: drag;
 }
 
@@ -49,6 +50,7 @@ body {
     height: 26px;
     padding-top: 5px;
     margin-left: 10px;
+    /* noinspection CssUnknownProperty */
     -webkit-app-region: no-drag;
     z-index: 9;
 }
@@ -289,6 +291,14 @@ hr {
     width: 100%;
     margin-top: 25px;
     height: 208px;
+}
+
+.lastProjectContainer .empty-item {
+    display: flex;
+    height: 100%;
+    color: var(--light-gray);
+    align-items: center;
+    justify-content: center;
 }
 
 .lastProjectContainer .item {

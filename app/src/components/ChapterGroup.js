@@ -6,8 +6,8 @@ const Commons = require(path.join(__dirname, '../provider/Commons'));
 class ChapterGroup {
 
     constructor(files, dirPath) {
-        this._files = files
-        this._dirPath = dirPath
+        this._files = files;
+        this._dirPath = dirPath;
     }
 
     toHTML() {
@@ -32,7 +32,7 @@ class ChapterGroup {
         radioLabel.innerText = this._files[0] + ' (' + this._files.length + ' files) ' + '(' + fileMTime + ')';
         radioLabel.htmlFor = this._files[0];
 
-        group.appendChild(radioDiv)
+        group.appendChild(radioDiv);
         group.appendChild(radioLabel);
 
         return group;

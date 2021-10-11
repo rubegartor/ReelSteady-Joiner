@@ -1,14 +1,15 @@
 const {app, dialog, getCurrentWindow} = require('electron').remote;
 const {shell, remote} = require('electron');
-const os = require('os');
 const fs = require('fs');
 const path = require('path');
-require(path.join(__dirname, '../src/provider/Unhandled'));
+require(path.join(__dirname, '../src/provider/Unhandled'))();
 
-const closeWindowBtn = document.getElementById('closeWindow');
-closeWindowBtn.addEventListener('click', () => {
-    getCurrentWindow().close();
-});
+if (remote.getGlobal('platform') === 'win32') {
+    const closeWindowBtn = document.getElementById('closeWindow');
+    closeWindowBtn.addEventListener('click', () => {
+        getCurrentWindow().close();
+    });
+}
 
 //Application modules
 const Commons = require(path.join(__dirname, '../src/provider/Commons'));
@@ -47,6 +48,8 @@ updateConfigDOM();
 if (!fs.existsSync(path.join(config.savePath))) {
     fs.mkdirSync(path.join(config.savePath));
 }
+
+let logsPath = remote.getGlobal('globalLogPathBase');
 
 // Load list of 4 latest projects
 Commons.loadLatestProjects();
@@ -92,6 +95,7 @@ selectFileBtn.addEventListener('click', () => {
                     let groups = VideoProvider.scanGoProDir(dirPath);
 
                     if (Object.keys(groups).length > 0) {
+                        // noinspection JSUnusedLocalSymbols
                         for (let [key, videoFiles] of Object.entries(groups)) {
                             let chapterGroup = new ChapterGroup(videoFiles, dirPath);
                             groupContainer.appendChild(chapterGroup.toHTML());
@@ -144,7 +148,8 @@ chapterGroupContinueBtn.addEventListener('click', () => {
 });
 
 openLogsPathBtn.addEventListener('click', () => {
-    shell.openPath(path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner', 'logs'));
+    // noinspection JSIgnoredPromiseFromCall
+    shell.openPath(logsPath);
 });
 
 document.getElementById('projectSavePathBtn').addEventListener('click', () => {
@@ -169,11 +174,13 @@ document.addEventListener('click', (event) => {
 
     if (event.target.className.includes('openPath')) {
         event.preventDefault();
+        // noinspection JSIgnoredPromiseFromCall
         shell.openPath(path.join(config.savePath, event.target.dataset.path));
     }
 
     if (event.target.className.includes('openExternal')) {
         event.preventDefault();
+        // noinspection JSIgnoredPromiseFromCall
         shell.openExternal(event.target.getAttribute('href'));
     }
 
