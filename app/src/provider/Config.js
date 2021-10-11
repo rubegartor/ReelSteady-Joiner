@@ -20,11 +20,7 @@ class Config {
         }
 
         if (!fs.existsSync(path.join(CONFIG_DIR, CONFIG_FILE))) {
-            fs.writeFile(path.join(CONFIG_DIR, CONFIG_FILE), JSON.stringify(this), (err) => {
-                if (!err) {
-                    throw new ConfigSaveError('Unable to save settings');
-                }
-            });
+            this.saveConfig();
         }
 
         fs.readFile(path.join(CONFIG_DIR, CONFIG_FILE), 'utf8', (err, data) => {
