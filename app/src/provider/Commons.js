@@ -1,4 +1,4 @@
-const version = '1.2.2';
+const version = '1.2.3';
 const {remote} = require('electron');
 const {app} = require('electron').remote;
 const rp = require('request-promise');
@@ -80,6 +80,21 @@ module.exports = {
         allProjects.sort(function (a, b) {
             return parseInt(a.file.split('_')[2]) - parseInt(b.file.split('_')[2]);
         });
+
+        if (config.groupProjects) {
+            let groupedProjects = [];
+            let groupedProjectsIds = [];
+            for (let project of allProjects) {
+                let projectID = project.file.substr(4, 4);
+
+                if (!groupedProjectsIds.includes(projectID)) {
+                    groupedProjectsIds.push(projectID);
+                    groupedProjects.push(project);
+                }
+            }
+
+            allProjects = groupedProjects;
+        }
 
         if (!allProjects.length) {
             lastProjectContainer.append(ProjectGroup.toEmptyHTML());
