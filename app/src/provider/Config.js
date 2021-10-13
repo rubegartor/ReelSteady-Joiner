@@ -15,6 +15,7 @@ class Config {
         // noinspection JSUnusedGlobalSymbols
         this.autoScan = false;
         this.savePath = '';
+        this.groupProjects = false;
     }
 
     loadConfig() {

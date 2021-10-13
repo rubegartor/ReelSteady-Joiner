@@ -32,6 +32,7 @@ const autoScanWrapperCloseBtn = document.getElementById('autoScanWrapperCloseBtn
 const chapterGroupContinueBtn = document.getElementById('chapterGroupContinueBtn');
 const autoScanOption = document.getElementById('autoScanOption');
 const projectSavePathOption = document.getElementById('projectSavePathOption');
+const groupProjectsOption = document.getElementById('groupProjectsOption');
 const openLogsPathBtn = document.getElementById('openLogsPathBtn');
 
 // Check for new updates when starting the application
@@ -147,6 +148,13 @@ chapterGroupContinueBtn.addEventListener('click', () => {
     getChapterGroupsToProcess();
 });
 
+groupProjectsOption.addEventListener('click', function () {
+    config.groupProjects = this.checked;
+    config.saveConfig();
+
+    Commons.loadLatestProjects();
+});
+
 openLogsPathBtn.addEventListener('click', () => {
     // noinspection JSIgnoredPromiseFromCall
     shell.openPath(logsPath);
@@ -219,5 +227,6 @@ function getChapterGroupsToProcess() {
  */
 function updateConfigDOM() {
     autoScanOption.checked = config.autoScan;
+    groupProjectsOption.checked = config.groupProjects;
     projectSavePathOption.value = config.savePath;
 }
