@@ -60,7 +60,7 @@ module.exports = {
                 try {
                     let contentStats = fs.statSync(path.join(config.savePath, dir, content));
                     if (!contentStats.isDirectory()) {
-                        let fileRegex = /^G[{(H|X)}]\d{6}_joined(_\d*)?.(MP4|mp4)/;
+                        let fileRegex = /^G[HX]\d{6}_joined(_\d*)?\.(MP4|mp4)/;
                         if (['.MP4', '.mp4'].includes(path.extname(content)) && fileRegex.test(content)) {
                             allProjects.push({'dir': dir, 'file': content, 'date': contentStats.mtime});
                         }

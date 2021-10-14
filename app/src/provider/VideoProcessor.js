@@ -110,7 +110,7 @@ class VideoProcessor {
             if (fs.existsSync(path.join(config.savePath, projectDir, outputName))) {
                 let dirFiles = Commons.readDir(path.join(config.savePath, projectDir));
                 let maxNumber = 1;
-                let fileRegex = /^G[{(H|X)}]\d{6}_joined(_\d*)?.(MP4|mp4)/;
+                let fileRegex = /^G[HX]\d{6}_joined(_\d*)?\.(MP4|mp4)/;
 
                 for (let file of dirFiles) {
                     if (fileRegex.test(file)) {
@@ -380,7 +380,7 @@ class VideoProcessor {
 
         //Get GoPro files
         for (let file of files) {
-            if (/^G[{(H|X)}]\d{6}.(MP4|mp4)/.test(file)) {
+            if (/^G[HX]\d{6}\.(MP4|mp4)/.test(file)) {
                 goProFiles.push(file);
             }
         }
