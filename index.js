@@ -4,12 +4,15 @@ const os = require('os')
 const fs = require('fs')
 const moment = require('moment')
 
+const iconPath = path.join(__dirname, 'app', 'assets', 'images', 'icon.png')
 let globalLogPathBase = undefined
+
 switch (os.platform()) {
     case 'win32':
         globalLogPathBase = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner', 'logs')
         break
     case 'darwin':
+        app.dock.setIcon(iconPath)
         globalLogPathBase = path.join(os.homedir(), '.reelsteady-joiner', 'logs')
         break
 }
@@ -27,7 +30,7 @@ function createWindow() {
         width: 960,
         height: 600,
         frame: false,
-        icon: path.join(__dirname, 'app', 'assets', 'images', 'icon.png'),
+        icon: iconPath,
         'minHeight': 600,
         'minWidth': 720,
         title: 'ReelSteady Joiner',
