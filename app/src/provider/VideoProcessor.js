@@ -17,7 +17,7 @@ const config = remote.getGlobal('globalConfig');
 const exePath = Commons.isDev() ? app.getAppPath() : path.dirname(process.execPath);
 const macExePath = path.join(app.getAppPath(), '..', '..');
 
-const exifToolConfigPath = path.join(exePath, 'app', 'bin', 'exiftool.config');
+let exifToolConfigPath = undefined;
 let gyroProcessPath = undefined;
 let exiftool = undefined;
 
@@ -25,6 +25,7 @@ switch (remote.getGlobal('platform')) {
     case 'darwin':
         gyroProcessPath = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'udtacopy') : path.join(macExePath, 'app', 'bin', 'mac', 'udtacopy');
         exiftool = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'exiftool', 'exiftool') : path.join(macExePath, 'app', 'bin', 'mac', 'exiftool', 'exiftool');
+        exifToolConfigPath = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'exiftool.config') : path.join(macExePath, 'app', 'bin', 'exiftool.config');
 
         //Give execution permissions to utilities
         fs.chmodSync(gyroProcessPath, 0o755);
@@ -33,6 +34,7 @@ switch (remote.getGlobal('platform')) {
     case 'win32':
         gyroProcessPath = path.join(exePath, 'app', 'bin', 'win', 'udtacopy.exe');
         exiftool = path.join(exePath, 'app', 'bin', 'win', 'exiftool.exe');
+        exifToolConfigPath = path.join(exePath, 'app', 'bin', 'exiftool.config');
         break;
 }
 
@@ -60,15 +62,19 @@ class VideoProcessor {
      */
     startProcessing(filePaths) {
         //Calculate log path and filename
-        let now = new Date();
-        let logName = (Commons.dateToStr(now) + '.log').replace(':', '-');
+        let logName = (Commons.dateToStr(new Date()) + '.log').replace(':', '-');
         let logPathBase = remote.getGlobal('globalLogPathBase');
         let logPath = path.join(logPathBase, logName);
 
         log.transports.file.resolvePath = () => logPath;
 
+        //Debug info
+        log.info('OS: ' + remote.getGlobal('platform') + ' - ' + remote.getGlobal('platformRelease'));
+        log.info('isDev?: ' + Commons.isDev());
         log.info('config: ' + JSON.stringify(config));
         log.info('exePath: ' + exePath);
+        log.info('macExePath: ' + macExePath);
+        log.info('ffmpegPath: ' + ffmpegPath);
         log.info('gyroProcessPath: ' + gyroProcessPath);
         log.info('exiftool: ' + exiftool);
         log.info('exiftool config: ' + exifToolConfigPath);
