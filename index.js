@@ -77,6 +77,7 @@ app.whenReady().then(() => {
     global.globalMoment.locale(app.getLocale())
 
     global.platform = os.platform()
+    global.platformRelease = os.release()
 
     global.globalLogPathBase = globalLogPathBase
 })
