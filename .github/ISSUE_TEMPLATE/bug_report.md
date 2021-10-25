@@ -21,6 +21,11 @@ If applicable, add screenshots to help explain your problem.
  - OS: [e.g. MacOS or Windows]
  - Version [e.g. 22]
 
+**GoPro camera and files information**
+(If applicable)
+- GoPro Model: [e.g. GoPro Hero 9 Black]
+- GoPro Files info: [General info about your chapter files]
+
 **Additional context**
 Add any other context about the problem here.
 
