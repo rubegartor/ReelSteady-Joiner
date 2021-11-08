@@ -52,8 +52,8 @@ class VideoProcessor {
     ffmpegNoMap3 = 'Stream map \'0:3\' matches no streams.';
 
     //Flags
-    ffmpegBreak = false
-    udtacopyBreak = false
+    ffmpegBreak = false;
+    udtacopyBreak = false;
 
     /**
      * Function to process all video files
