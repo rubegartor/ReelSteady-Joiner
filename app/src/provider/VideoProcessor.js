@@ -91,7 +91,13 @@ class VideoProcessor {
 
         filePaths = filePaths.sort();
 
-        log.debug('FilePaths sorted: ' + filePaths.join(', '));
+        log.debug('FilePaths sorted: ' + filePaths.join(', ') + '\n');
+
+        //Get file sizes in bytes
+        log.debug('Getting the size of video files');
+        for (let filePath of filePaths) {
+            log.debug(filePath + ' size: ' + Commons.getFileSize(filePath) + 'B' + (filePaths.indexOf(filePath) === (filePaths.length - 1) ? '\n' : ''));
+        }
 
         log.debug('Starting getModifiedDate');
         this.getModifiedDate(filePaths[0]).then((value) => {
@@ -149,7 +155,7 @@ class VideoProcessor {
 
             log.debug('Getting getTotalVidDuration');
             this.getTotalVidDuration(filePaths).then(totalDuration => {
-                log.debug('Total duration is: ' + totalDuration);
+                log.debug('Total duration is: ' + totalDuration + '\n');
                 this.progressBar.maximum = totalDuration;
 
                 let args = [

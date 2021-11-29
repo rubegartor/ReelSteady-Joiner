@@ -175,5 +175,13 @@ module.exports = {
         if (exists) fs.unlinkSync(path);
 
         return exists;
+    },
+
+    /**
+     * Function that gets the file size
+     * @param filePath
+     */
+    getFileSize(filePath) {
+        return fs.statSync(filePath).size
     }
 }
