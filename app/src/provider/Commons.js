@@ -19,7 +19,7 @@ module.exports = {
      */
     checkForUpdates: function () {
         rp(remotePackageJsonUrl)
-            .then(function (data) {
+            .then((data) => {
                 let packageJson = JSON.parse(data.toString());
                 let repoVersion = packageJson.version;
 
@@ -32,7 +32,13 @@ module.exports = {
                     };
                     Alert.appendToContainer(alert.toHTML());
                 }
-            });
+            })
+            .catch(() => {
+                let alert = new Alert('Unable to check for available updates', Alert.ALERT_DANGER, 5000);
+                alert.width = '310px';
+                Alert.appendToContainer(alert.toHTML());
+            })
+        ;
     },
 
     /**
