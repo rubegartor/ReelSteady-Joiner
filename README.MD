@@ -16,7 +16,7 @@ _Download and execute installer (**[Releases tab](https://github.com/rubegartor/
 
 1. Choose your settings
 
-![Settings](https://i.imgur.com/G1b56s4.png)
+![Settings](https://i.imgur.com/FsEBUaB.png)
 
 2. Select all of your mp4 files to concatenate (Normally 4GB chunks or less) and start merge process
    1. AutoScan Option let you find chapters easily
