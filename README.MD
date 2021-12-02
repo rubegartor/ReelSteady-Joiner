@@ -37,10 +37,15 @@ _Download and execute installer (**[Releases tab](https://github.com/rubegartor/
 **Warning**: If you process parts that do not belong to the same run, the final video file will be corrupted (this will not happen with auto scan option enabled)
 
 ### Troubleshooting 🔎
-_(Known issues)_
+_(Known issues and recommendations)_
 
 - If you are running ReelSteady Joiner on macOS you will need to give security permissions to udtacopy first time you use it.
   Popup will appear, go System Preferences > Security & privacy and click button: Open anyway.
+
+- Antiviruses could interfere with file manipulation, if you have troubles, try to disable it
+
+- It's mandatory that the files keep their original names in order to be manipulated correctly
+  - Without AutoScan option enabled, it may work if the video names correspond alphabetically to the recording order
 
 ### Update ReelSteady Joiner ⚙️
 
@@ -62,7 +67,7 @@ npm dependencies listed in package.json
 * [exiftool](https://exiftool.org/) - ExifTool
 * [GoProLabs](https://gopro.github.io/labs/) - GoProLabs utils
 
-ReelSteady Joiner is only a wrapper application for GoProLabs "udtacopy" feature, thanks to dnewman-gpsw and GoProLabs for creating udtacopy.
+ReelSteady Joiner is only a wrapper application for GoProLabs "udtacopy" feature, thanks to [dnewman-gpsw](https://github.com/dnewman-gpsw) and [GoProLabs](https://github.com/gopro/labs) for creating udtacopy.
 
 ## Authors ✒️
 
