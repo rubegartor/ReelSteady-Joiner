@@ -34,6 +34,12 @@ _Download and execute installer (**[Releases tab](https://github.com/rubegartor/
 
 ![Finished](https://i.imgur.com/rx6jk6W.png)
 
+- Video explanation here (Thanks to TRONCAT FPV) ([https://www.youtube.com/watch?v=HiTVtU1SDIc](https://www.youtube.com/watch?v=HiTVtU1SDIc)):
+
+[![Video Tutorial](https://img.youtube.com/vi/HiTVtU1SDIc/0.jpg)](https://www.youtube.com/watch?v=HiTVtU1SDIc)
+
+---
+
 **Warning**: If you process parts that do not belong to the same run, the final video file will be corrupted (this will not happen with auto scan option enabled)
 
 ### Troubleshooting 🔎
