@@ -144,7 +144,7 @@ class VideoProcessor {
 
             let concatText = '';
             for (let filePath of filePaths) {
-                concatText += 'file \'' + filePath + '\'\n';
+                concatText += 'file \'' + Commons.scapePath(filePath) + '\'\n';
             }
 
             log.debug('concat.txt file content:\n' + concatText);
@@ -162,7 +162,7 @@ class VideoProcessor {
                     '-y',
                     '-f', 'concat',
                     '-safe', '0',
-                    '-i', path.join(config.savePath, projectDir, 'concat.txt'),
+                    '-i', 'concat.txt',
                     '-c', 'copy',
                     '-map', '0:0',
                     '-map', '0:1',

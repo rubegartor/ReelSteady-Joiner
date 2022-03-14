@@ -189,5 +189,16 @@ module.exports = {
      */
     getFileSize(filePath) {
         return fs.statSync(filePath).size
+    },
+
+    /**
+     * Function that scapes unusual characters in path string
+     * https://www.ffmpeg.org/ffmpeg-utils.html#Quoting-and-escaping
+     *
+     * @param path
+     * @returns string
+     */
+    scapePath(path) {
+        return path.replace(/'/g, "'\\''");
     }
 }
