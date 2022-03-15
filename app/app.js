@@ -146,6 +146,7 @@ autoScanWrapperCloseBtn.addEventListener('click', () => {
 
 chapterGroupContinueBtn.addEventListener('click', () => {
     getChapterGroupsToProcess();
+    chapterGroupContinueBtn.style.setProperty('display', 'none');
 });
 
 groupProjectsOption.addEventListener('click', function () {

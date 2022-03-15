@@ -46,10 +46,13 @@ class VideoProcessor {
     selectFileBtn = document.getElementById('selectFiles');
     processVideosBtn = document.getElementById('processVideos');
     progressBar = new ProgressBar(document.getElementById('progressBar'));
+    projectSavePathBtn = document.getElementById('projectSavePathBtn');
+
 
     //FFmpeg errors
     ffmpegNoSpaceLeftError = 'No space left on device';
     ffmpegNoMap3 = 'Stream map \'0:3\' matches no streams.';
+    ffmpegCantOpen = 'Impossible to open';
 
     //Flags
     ffmpegBreak = false;
@@ -81,6 +84,7 @@ class VideoProcessor {
 
         this.selectFileBtn.setAttribute('disabled', 'disabled');
         this.processVideosBtn.setAttribute('disabled', 'disabled');
+        this.projectSavePathBtn.setAttribute('disabled', 'disabled');
 
         this.progressBar.color = ProgressBar.COLOR_ORANGE;
         this.progressBar.maximum = 100;
@@ -191,15 +195,23 @@ class VideoProcessor {
 
                     if (!this.ffmpegBreak && data.includes(this.ffmpegNoMap3)) {
                         this.ffmpegBreak = true;
-                        Alert.appendToContainer(new Alert('Error: MP4 file not valid (It\'s not a GoPro File)', Alert.ALERT_DANGER, 5000).toHTML());
+                        Alert.appendToContainer(new Alert('Error: MP4 file not valid (It\'s not a GoPro File)', Alert.ALERT_DANGER, 0).toHTML());
 
                         log.error(this.ffmpegNoMap3);
+                    }
+
+                    if (!this.ffmpegBreak && data.includes(this.ffmpegCantOpen)) {
+                        this.ffmpegBreak = true;
+                        Alert.appendToContainer(new Alert(data.split(']')[1].split('concat.txt')[0], Alert.ALERT_DANGER, 0).toHTML());
+
+                        log.error(this.ffmpegCantOpen);
                     }
 
                     if (this.ffmpegBreak) {
                         proc.kill();
                         Commons.resetStatus();
                         this.progressBar.color = ProgressBar.COLOR_RED;
+                        this.projectSavePathBtn.removeAttribute('disabled');
                     } else {
                         this.statusElem.innerText = 'Processing videos';
                         this.statusElem.classList.add('loading');
@@ -327,6 +339,7 @@ class VideoProcessor {
                 this.statusElem.classList.add('text-success');
                 this.statusElem.classList.remove('loading');
                 this.selectFileBtn.removeAttribute('disabled');
+                this.projectSavePathBtn.removeAttribute('disabled');
 
                 log.debug('Finished and reloading latest projects');
                 Commons.loadLatestProjects();
