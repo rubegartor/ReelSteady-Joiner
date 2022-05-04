@@ -14,9 +14,12 @@
     "app/assets/images/*"
   ],
   "nsis": {
+    "oneClick": false,
     "installerIcon": "app/assets/images/icn.ico",
     "installerHeaderIcon": "app/assets/images/icn.ico",
-    "deleteAppDataOnUninstall": true
+    "deleteAppDataOnUninstall": true,
+    "warningsAsErrors": false,
+    "runAfterFinish": false
   },
   "win": {
     "files": [
@@ -24,8 +27,7 @@
     ],
     "icon": "app/assets/images/icn.ico",
     "target": [
-      "nsis",
-      "msi"
+      "nsis"
     ],
     "extraFiles": [
       "app/bin/win/**",
