@@ -51,7 +51,6 @@ class VideoProcessor {
 
     //FFmpeg errors
     ffmpegNoSpaceLeftError = 'No space left on device';
-    ffmpegNoMap3 = 'Stream map \'0:3\' matches no streams.';
     ffmpegCantOpen = 'Impossible to open';
 
     //Flags
@@ -162,85 +161,87 @@ class VideoProcessor {
                 log.debug('Total duration is: ' + totalDuration + '\n');
                 this.progressBar.maximum = totalDuration;
 
-                let args = [
-                    '-y',
-                    '-f', 'concat',
-                    '-safe', '0',
-                    '-i', 'concat.txt',
-                    '-c', 'copy',
-                    '-map', '0:0',
-                    '-map', '0:1',
-                    '-map', '0:3',
-                    outputName
-                ];
+                this.getAllStreamMaps(path.join(config.savePath, projectDir)).then(streamMaps => {
+                    let args = [
+                        '-y',
+                        '-f', 'concat',
+                        '-safe', '0',
+                        '-i', 'concat.txt',
+                        '-c', 'copy',
+                        '-ignore_unknown'
+                    ];
 
-                // noinspection JSCheckFunctionSignatures
-                let proc = spawn(ffmpegPath, args, {cwd: path.join(config.savePath, projectDir)});
-
-                log.debug('FFmpeg cwd: ' + path.join(config.savePath, projectDir))
-                log.debug('FFmpeg proc object: ' + JSON.stringify(proc));
-
-                proc.stderr.setEncoding('utf8')
-                proc.stderr.on('data', (data) => {
-                    log.debug(data);
-
-                    if (!this.ffmpegBreak && data.includes(this.ffmpegNoSpaceLeftError)) {
-                        this.ffmpegBreak = true;
-                        let alert = new Alert('Error: ' + this.ffmpegNoSpaceLeftError, Alert.ALERT_DANGER, 0);
-                        alert.width = '300px';
-                        Alert.appendToContainer(alert.toHTML());
-
-                        log.error(this.ffmpegNoSpaceLeftError);
+                    for (let streamMap of streamMaps) {
+                        args.push('-map', '0:' + streamMap);
                     }
 
-                    if (!this.ffmpegBreak && data.includes(this.ffmpegNoMap3)) {
-                        this.ffmpegBreak = true;
-                        Alert.appendToContainer(new Alert('Error: MP4 file not valid (It\'s not a GoPro File)', Alert.ALERT_DANGER, 0).toHTML());
+                    args.push(outputName);
 
-                        log.error(this.ffmpegNoMap3);
-                    }
+                    // noinspection JSCheckFunctionSignatures
+                    let proc = spawn(ffmpegPath, args, {cwd: path.join(config.savePath, projectDir)});
 
-                    if (!this.ffmpegBreak && data.includes(this.ffmpegCantOpen)) {
-                        this.ffmpegBreak = true;
-                        Alert.appendToContainer(new Alert(data.split(']')[1].split('concat.txt')[0], Alert.ALERT_DANGER, 0).toHTML());
+                    log.debug('FFmpeg cwd: ' + path.join(config.savePath, projectDir))
+                    log.debug('FFmpeg proc object: ' + JSON.stringify(proc));
 
-                        log.error(this.ffmpegCantOpen);
-                    }
+                    proc.stderr.setEncoding('utf8')
+                    proc.stderr.on('data', (data) => {
+                        log.debug(data);
 
-                    if (this.ffmpegBreak) {
-                        proc.kill();
-                        Commons.resetStatus();
-                        this.progressBar.color = ProgressBar.COLOR_RED;
-                        this.projectSavePathBtn.removeAttribute('disabled');
-                    } else {
-                        this.statusElem.innerText = 'Processing videos';
-                        this.statusElem.classList.add('loading');
-                        let progressValue = this.progressBar.getProgress(data);
-                        if (!isNaN(progressValue)) {
-                            this.progressBar.value = progressValue;
+                        if (!this.ffmpegBreak && data.includes(this.ffmpegNoSpaceLeftError)) {
+                            this.ffmpegBreak = true;
+                            let alert = new Alert('Error: ' + this.ffmpegNoSpaceLeftError, Alert.ALERT_DANGER, 0);
+                            alert.width = '300px';
+                            Alert.appendToContainer(alert.toHTML());
+
+                            log.error(this.ffmpegNoSpaceLeftError);
                         }
-                    }
-                });
 
-                proc.on('close', () => {
-                    Commons.unlinkIfExists(path.join(config.savePath, projectDir, 'concat.txt')) //The file concat.txt is deleted because it's useless for the user
-                    log.debug('concat.txt file deleted');
+                        if (!this.ffmpegBreak && data.includes(this.ffmpegCantOpen)) {
+                            this.ffmpegBreak = true;
+                            Alert.appendToContainer(new Alert(data.split(']')[1].split('concat.txt')[0], Alert.ALERT_DANGER, 0).toHTML());
 
-                    if (!this.ffmpegBreak) {
-                        log.debug('Starting processing of gyro data');
-                        this.processGyro(outputName, projectDir, filePaths[0]);
-                    } else {
-                        //Remove output video file
-                        let invalidFilePath = path.join(config.savePath, projectDir, outputName);
-                        Commons.unlinkIfExists(invalidFilePath);
-
-                        //Remove project dir if it's empty
-                        let invalidProjectDir = path.join(config.savePath, projectDir);
-                        if (fs.existsSync(invalidProjectDir) && !Commons.readDir(invalidProjectDir).length) {
-                            fs.rmdirSync(path.join(config.savePath, projectDir));
+                            log.error(this.ffmpegCantOpen);
                         }
-                    }
-                });
+
+                        if (this.ffmpegBreak) {
+                            proc.kill();
+                            Commons.resetStatus();
+                            this.progressBar.color = ProgressBar.COLOR_RED;
+                            this.projectSavePathBtn.removeAttribute('disabled');
+                        } else {
+                            this.statusElem.innerText = 'Processing videos';
+                            this.statusElem.classList.add('loading');
+                            let progressValue = this.progressBar.getProgress(data);
+                            if (!isNaN(progressValue)) {
+                                this.progressBar.value = progressValue;
+                            }
+                        }
+                    });
+
+                    proc.on('close', () => {
+                        Commons.unlinkIfExists(path.join(config.savePath, projectDir, 'concat.txt')) //The file concat.txt is deleted because it's useless for the user
+                        log.debug('concat.txt file deleted');
+
+                        if (!this.ffmpegBreak) {
+                            log.debug('Starting processing of gyro data');
+                            this.processGyro(outputName, projectDir, filePaths[0]);
+                        } else {
+                            //Remove output video file
+                            let invalidFilePath = path.join(config.savePath, projectDir, outputName);
+                            Commons.unlinkIfExists(invalidFilePath);
+
+                            //Remove project dir if it's empty
+                            let invalidProjectDir = path.join(config.savePath, projectDir);
+                            if (fs.existsSync(invalidProjectDir) && !Commons.readDir(invalidProjectDir).length) {
+                                fs.rmdirSync(path.join(config.savePath, projectDir));
+                            }
+                        }
+                    });
+                }).catch((err) => {
+                    Commons.resetStatus();
+                    Alert.appendToContainer(new Alert('Unable to get video stream maps.', Alert.ALERT_DANGER, 5000).toHTML());
+                    log.error(err);
+                })
             }).catch((err) => {
                 Commons.resetStatus();
                 Alert.appendToContainer(new Alert('Unable to get total videos duration times', Alert.ALERT_DANGER, 5000).toHTML());
@@ -350,6 +351,31 @@ class VideoProcessor {
     }
 
     /**
+     * Function that get all stream maps available in the video files
+     *
+     * @param cwdPath
+     * @returns {Promise<[string]>}
+     */
+    getAllStreamMaps(cwdPath) {
+        return new Promise((resolve, reject) => {
+            const cmd = ['"' + ffmpegPath + '"', '-f concat', '-safe 0', '-i concat.txt', '-y'];
+            exec(cmd.join(' '), {cwd: cwdPath}, function (error, stdout, stderr) {
+                log.debug('getAllStreamMaps cwd: ' + cwdPath)
+                log.debug('getAllStreamMaps output: \n' + stderr);
+                try {
+                    const searchStr = 'Stream #0:';
+                    // noinspection JSUnresolvedFunction
+                    const streamMaps = [...stderr.matchAll(new RegExp(searchStr, 'gi'))].map(a => a.input.substr(a.index + searchStr.length, 1));
+                    log.debug('Found ' + streamMaps.length + ' stream maps');
+                    resolve(streamMaps);
+                } catch (e) {
+                    reject({'error': error, 'stderr': stderr});
+                }
+            });
+        });
+    }
+
+    /**
      * Function that get total duration of all selected files
      *
      * @param videoFiles
@@ -362,6 +388,7 @@ class VideoProcessor {
                 let cmd = '"' + ffmpegPath + '" -i "' + vidFile + '"';
                 exec(cmd, function (error, stdout, stderr) {
                     if (stderr.includes('Duration:')) {
+                        log.debug('getTotalVidDuration output: \n' + stderr);
                         //Here can't handle exceptions easily because output is really an error :D
                         let output = stderr.substr(stderr.indexOf('Duration:') + 9, stderr.length);
                         let duration = output.substr(0, output.indexOf(','));

@@ -1,4 +1,4 @@
-const version = '1.2.4';
+const version = '1.2.5';
 const {remote} = require('electron');
 const {app} = require('electron').remote;
 const rp = require('request-promise');
