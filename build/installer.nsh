@@ -1,6 +1,9 @@
-!include "MUI2.nsh"
+RequestExecutionLevel admin
+
+!include MUI2.nsh
 
 Function .OnInstSuccess
-   File /oname=$PLUGINSDIR\VC_redist.x64.exe "${BUILD_RESOURCES_DIR}\VC_redist.x64.exe"
-   Exec '"${BUILD_RESOURCES_DIR}\VC_redist.x64.exe"'
+    File /oname=$INSTDIR\VC_redist.x64.exe "${BUILD_RESOURCES_DIR}\bin\VC_redist.x64.exe"
+    ExecWait '$INSTDIR\VC_redist.x64.exe /install /quiet'
+    Delete "$INSTDIR\VC_redist.x64.exe"
 FunctionEnd

@@ -14,12 +14,15 @@
     "app/assets/images/*"
   ],
   "nsis": {
+    "perMachine": true,
     "oneClick": false,
     "installerIcon": "app/assets/images/icn.ico",
+    "uninstallerIcon": "app/assets/images/icn.ico",
     "installerHeaderIcon": "app/assets/images/icn.ico",
     "deleteAppDataOnUninstall": true,
     "warningsAsErrors": false,
-    "runAfterFinish": false
+    "runAfterFinish": false,
+    "createDesktopShortcut": true
   },
   "win": {
     "files": [
