@@ -1,7 +1,7 @@
 {
   "productName": "ReelSteady Joiner",
   "appId": "org.rubegartor.reelsteady-joiner",
-  "artifactName": "${productName}-setup-${version}-${arch}.${ext}",
+  "artifactName": "${productName}-setup-${version}-${os}-${arch}.${ext}",
   "compression": "maximum",
   "directories": {
     "output": "builds/"
