@@ -1,7 +1,7 @@
 {
   "productName": "ReelSteady Joiner",
   "appId": "org.rubegartor.reelsteady-joiner",
-  "artifactName": "${productName}-setup-${version}.${ext}",
+  "artifactName": "${productName}-setup-${version}-${arch}.${ext}",
   "compression": "maximum",
   "directories": {
     "output": "builds/"
@@ -41,7 +41,15 @@
     "files": [
       "app/templates/index-mac.html"
     ],
-    "target": "dmg",
+    "target": [
+      {
+        "target": "dmg",
+        "arch": [
+          "x64",
+          "arm64"
+        ]
+      }
+    ],
     "icon": "app/assets/images/icon.png",
     "extraFiles": [
       "app/bin/mac/**",
