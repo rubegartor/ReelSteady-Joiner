@@ -1,4 +1,6 @@
-class Alert {
+const ui = require('../commons/ui');
+
+class AlertRender {
     static ALERT_SUCCESS = 'alert-success';
     static ALERT_DANGER = 'alert-danger';
     static ALERT_INFO = 'alert-info';
@@ -26,26 +28,23 @@ class Alert {
      * @returns {HTMLDivElement}
      */
     toHTML() {
-        let alert = document.createElement('div')
+        const alert = ui.createElem('div');
         alert.innerHTML = this._body;
         if (this._width !== 0) alert.style.setProperty('width', this._width);
         alert.classList.add('alert', this._type);
 
-        let that = this;
+        const that = this;
         if (this._timeout !== 0) {
             setTimeout(() => {
                 that._elem.classList.add('alert-hide');
                 this._removeAlert(that);
             }, this._timeout);
         } else {
-            let alertClose = document.createElement('div');
+            const alertClose = ui.createElem('div');
             alertClose.innerHTML = '&times;';
             alertClose.classList.add('alert-close');
 
-            alertClose.addEventListener('click', () => {
-                this._removeAlert(that);
-            });
-
+            ui.onClick(alertClose, () => this._removeAlert(that));
             alert.appendChild(alertClose);
         }
 
@@ -62,6 +61,7 @@ class Alert {
      */
     _removeAlert(alert) {
         alert._elem.classList.add('alert-hide');
+
         setTimeout(() => {
             alert._elem.remove();
 
@@ -77,8 +77,8 @@ class Alert {
      * @param alert
      */
     static appendToContainer(alert) {
-        document.getElementById('alertContainer').appendChild(alert);
+        ui.get('alertContainer').appendChild(alert);
     }
 }
 
-module.exports = Alert;
+module.exports = AlertRender;

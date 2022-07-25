@@ -1,233 +1,192 @@
-const {app, dialog, getCurrentWindow} = require('electron').remote;
-const {shell, remote} = require('electron');
+const {shell, ipcMain, app, dialog} = require('electron');
 const fs = require('fs');
 const path = require('path');
-require(path.join(__dirname, '../src/provider/Unhandled'))();
+const os = require('os');
+const pLimit = require('p-limit');
 
-if (remote.getGlobal('platform') === 'win32') {
-    const closeWindowBtn = document.getElementById('closeWindow');
-    closeWindowBtn.addEventListener('click', () => {
-        getCurrentWindow().close();
-    });
+const Config = require('./src/provider/Config');
+global.config = new Config();
+config.loadConfig();
+
+global.projects = [];
+
+const Commons = require('./src/provider/Commons');
+const VideoProcessor = require('./src/provider/VideoProcessor');
+const Project = require('./src/entity/Project');
+const ConfigSaveError = require('./src/exceptions/ConfigSaveError');
+
+global.locale = app.getLocale();
+global.globalLogPathBase = undefined;
+
+switch (os.platform()) {
+    case 'win32':
+        globalLogPathBase = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner', 'logs');
+        break;
+    case 'darwin':
+        globalLogPathBase = path.join(os.homedir(), '.reelsteady-joiner', 'logs');
+        break;
 }
 
-//Application modules
-const Commons = require(path.join(__dirname, '../src/provider/Commons'));
-const VideoProvider = require(path.join(__dirname, '../src/provider/VideoProcessor'));
-const ChapterGroup = require(path.join(__dirname, '../src/components/ChapterGroup'));
-const Alert = require(path.join(__dirname, '../src/components/Alert'));
+if (!fs.existsSync(globalLogPathBase)) {
+    fs.mkdirSync(globalLogPathBase, {recursive: true});
+}
 
-//Exceptions
-const NotConsecutiveChaptersError = require(path.join(__dirname, '../src/exceptions/NotConsecutiveChaptersError'));
+require('./src/provider/Unhandled')(globalLogPathBase);
 
-// Javascript interface elements
-const statusElem = document.getElementById('status');
-const selectFileBtn = document.getElementById('selectFiles');
-const processVideosBtn = document.getElementById('processVideos');
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsContainer = document.getElementById('settingsWrapper');
-const settingsGoBackBtn = document.getElementById('settingsGoBackBtn');
-const autoScanWrapper = document.getElementById('autoScanWrapperBg');
-const autoScanWrapperCloseBtn = document.getElementById('autoScanWrapperCloseBtn');
-const chapterGroupContinueBtn = document.getElementById('chapterGroupContinueBtn');
-const autoScanOption = document.getElementById('autoScanOption');
-const projectSavePathOption = document.getElementById('projectSavePathOption');
-const groupProjectsOption = document.getElementById('groupProjectsOption');
-const openLogsPathBtn = document.getElementById('openLogsPathBtn');
 
-// Check for new updates when starting the application
-Commons.checkForUpdates();
+ipcMain.on('errorInWindow', function (event, data) {
+    if (!Commons.isDev() && !data.toString().includes('Uncaught EvalError: Possible side-effect in debug-evaluate')) {
+        throw data;
+    }
+});
 
-let config = remote.getGlobal('globalConfig');
+// Checks if configPath exists
 if (!fs.existsSync(config.savePath)) {
     config.savePath = path.join(app.getPath('documents'), 'ReelSteady Joiner');
     config.saveConfig();
 }
-updateConfigDOM();
 
 // Checks if documents path for saving projects exists
 if (!fs.existsSync(path.join(config.savePath))) {
     fs.mkdirSync(path.join(config.savePath));
 }
 
-let logsPath = remote.getGlobal('globalLogPathBase');
+// Events
+ipcMain.on('getConfig', (event) => {
+    event.returnValue = config;
+});
 
-// Load list of 4 latest projects
-Commons.loadLatestProjects();
+ipcMain.on('getLocale', (event) => {
+    event.returnValue = locale;
+});
 
-let videoFiles = [];
+ipcMain.on('getLogPathBase', (event) => {
+    event.returnValue = globalLogPathBase;
+});
 
-selectFileBtn.addEventListener('click', () => {
-    if (!config.autoScan) {
-        dialog.showOpenDialog({
-            properties: ['openFile', 'multiSelections'],
-            filters: [
-                {name: 'MP4 Video', extensions: ['mp4']}
-            ],
-        }).then((result => {
-            if (result.filePaths.length !== 0) {
-                for (let videoFile of result.filePaths) {
-                    if (!videoFiles.includes(videoFile)) {
-                        videoFiles.push(videoFile);
-                    }
-                }
+ipcMain.on('closeApp', () => {
+    app.quit();
+});
 
-                statusElem.innerText = videoFiles.length + ' videos loaded';
-                statusElem.classList.remove('loading');
-                processVideosBtn.removeAttribute('disabled');
-            } else {
-                processVideosBtn.setAttribute('disabled', 'disabled');
-                statusElem.innerText = 'Waiting files';
-                statusElem.classList.add('loading');
-            }
+ipcMain.on('getProjects', (event) => {
+    event.returnValue = projects;
+});
 
-            statusElem.classList.remove('text-success');
-        }));
-    } else {
-        dialog.showOpenDialog({
-            properties: ['openDirectory']
-        }).then((result) => {
-            if (result.filePaths.length !== 0) {
-                let dirPath = result.filePaths[0];
+ipcMain.on('getProject', (event, args) => {
+    event.returnValue = projects.find(x => x.id === args.id);
+});
 
-                try {
-                    let groupContainer = document.getElementById('groupContainer');
-                    groupContainer.innerHTML = '';
-                    let groups = VideoProvider.scanGoProDir(dirPath);
-
-                    if (Object.keys(groups).length > 0) {
-                        // noinspection JSUnusedLocalSymbols
-                        for (let [key, videoFiles] of Object.entries(groups)) {
-                            let chapterGroup = new ChapterGroup(videoFiles, dirPath);
-                            groupContainer.appendChild(chapterGroup.toHTML());
-                        }
-                    } else {
-                        chapterGroupContinueBtn.style.setProperty('display', 'none');
-                        groupContainer.appendChild(ChapterGroup.toHTMLEmpty());
-                    }
-
-                    autoScanWrapper.style.removeProperty('display');
-                } catch (ex) {
-                    if (ex instanceof NotConsecutiveChaptersError) {
-                        Alert.appendToContainer(new Alert(ex.message, Alert.ALERT_DANGER, 5000).toHTML());
-                    } else {
-                        throw ex;
-                    }
-                }
-            }
-        });
+ipcMain.on('createProject', (event, args) => {
+    for (const projectToCheck of projects) {
+        if (projectToCheck.completed) {
+            projects.splice(projects.indexOf(projectToCheck), 1);
+            event.sender.send('removeCompletedProject', {'id': projectToCheck.id});
+        }
     }
+
+    // Complete projects failed
+    for (const project of projects) {
+        if (project.failed) {
+            project.completed = true;
+        }
+    }
+
+    const project = new Project(args.dirPath, args.files);
+    projects.push(project);
+
+    event.sender.send('createProjectReturn', {'project': project});
 });
 
-processVideosBtn.addEventListener('click', () => {
-    selectFileBtn.setAttribute('disabled', 'disabled');
-    const videoProvider = new VideoProvider;
-    videoProvider.startProcessing(videoFiles);
-    videoFiles = [];
+ipcMain.on('openLogsPath', () => {
+    shell.openPath(globalLogPathBase).then();
 });
 
-settingsBtn.addEventListener('click', () => {
-    settingsContainer.style.removeProperty('display');
+ipcMain.on('openExternal', (event, args) => {
+    shell.openExternal(args).then();
 });
 
-settingsGoBackBtn.addEventListener('click', () => {
-    settingsContainer.style.setProperty('display', 'none');
-});
-
-autoScanOption.addEventListener('change', function () {
-    config.autoScan = this.checked;
-    config.saveConfig();
-});
-
-autoScanWrapperCloseBtn.addEventListener('click', () => {
-    chapterGroupContinueBtn.style.setProperty('display', 'none');
-    autoScanWrapper.style.setProperty('display', 'none');
-});
-
-chapterGroupContinueBtn.addEventListener('click', () => {
-    getChapterGroupsToProcess();
-    chapterGroupContinueBtn.style.setProperty('display', 'none');
-});
-
-groupProjectsOption.addEventListener('click', function () {
-    config.groupProjects = this.checked;
-    config.saveConfig();
-
-    Commons.loadLatestProjects();
-});
-
-openLogsPathBtn.addEventListener('click', () => {
-    // noinspection JSIgnoredPromiseFromCall
-    shell.openPath(logsPath);
-});
-
-document.getElementById('projectSavePathBtn').addEventListener('click', () => {
+ipcMain.on('showLogsPathDialog', (event) => {
     dialog.showOpenDialog({
         properties: ['openDirectory']
     }).then((result) => {
         if (result.filePaths.length > 0) {
             config.savePath = result.filePaths[0];
-            config.saveConfig();
-            projectSavePathOption.value = config.savePath;
-
-            Commons.loadLatestProjects();
+            try {
+                config.saveConfig();
+            } catch (e) {
+                if (e instanceof ConfigSaveError) {
+                    event.sender.send('spawnNotification', {
+                        'message': e.toString(),
+                        'type': 'danger',
+                        'width': 350,
+                        'timeout': 5000
+                    });
+                } else {
+                    throw e;
+                }
+            }
+            event.sender.send('showLogsPathDialogReturn', {'savePath': config.savePath});
         }
     });
 });
 
-document.addEventListener('click', (event) => {
-    let invalidTags = ['path', 'svg'];
-    if (invalidTags.includes(event.target.tagName)) {
-        return;
-    }
+ipcMain.on('showSelectFilesDialog', (event) => {
+    dialog.showOpenDialog({
+        properties: ['openDirectory']
+    }).then((result) => {
+        if (result.filePaths.length !== 0) {
+            event.sender.send('showSelectFilesDialogReturn', result.filePaths[0]);
+        }
+    });
+});
 
-    if (event.target.className.includes('openPath')) {
-        event.preventDefault();
-        // noinspection JSIgnoredPromiseFromCall
-        shell.openPath(path.join(config.savePath, event.target.dataset.path));
-    }
-
-    if (event.target.className.includes('openExternal')) {
-        event.preventDefault();
-        // noinspection JSIgnoredPromiseFromCall
-        shell.openExternal(event.target.getAttribute('href'));
-    }
-
-    if (event.target.name && event.target.name.includes('chapterGroup')) {
-        chapterGroupContinueBtn.style.removeProperty('display');
+ipcMain.on('scanGoProDir', (event, args) => {
+    try {
+        event.returnValue = VideoProcessor.scanGoProDir(args.dirPath);
+    } catch (e) {
+        event.returnValue = [];
+        event.sender.send('spawnNotification', {
+            'message': e.toString(),
+            'type': 'danger',
+            'width': 350,
+            'timeout': 5000
+        });
     }
 });
 
-/**
- * Get selected chapter group
- */
-function getChapterGroupsToProcess() {
-    let chapterGroups = document.querySelectorAll("[data-type='chapterGroup']");
+ipcMain.on('getThumbnail', (event, args) => {
+    const project = projects.find(x => x.id === args.id);
 
-    videoFiles = [];
+    VideoProcessor.getThumbnail(path.join(project.dirPath, project.files[0]), project.id).then((path) => {
+        event.sender.send('getThumbnailReturn', {'id': project.id, 'path': path});
+    });
+});
 
-    for (let chapterGroup of chapterGroups) {
-        if (chapterGroup.checked) {
-            let files = chapterGroup.dataset.files.split(',');
-            let dirPath = chapterGroup.dataset.dirPath;
+ipcMain.on('removeProject', (event, args) => {
+    projects.find(x => x.id === args.id).remove();
+});
 
-            for (let file of files) {
-                videoFiles.push(path.join(dirPath, file));
-            }
-        }
-    }
+ipcMain.on('updateProjectName', (event, args) => {
+    projects.find(x => x.id === args.id).name = args.name;
+});
 
-    statusElem.innerText = videoFiles.length + ' videos loaded';
-    statusElem.classList.remove('loading', 'text-success');
-    processVideosBtn.removeAttribute('disabled');
-    autoScanWrapper.style.setProperty('display', 'none');
-}
+ipcMain.on('processVideos', (event) => {
+    const limit = pLimit(1);
 
-/**
- * Update config DOM
- */
-function updateConfigDOM() {
-    autoScanOption.checked = config.autoScan;
-    groupProjectsOption.checked = config.groupProjects;
-    projectSavePathOption.value = config.savePath;
-}
+    const input = projects
+        .filter(p => !p.failed)
+        .filter(p => !p.completed)
+        .map((p) => {
+            event.sender.send('processVideosStarting');
+            return limit(() => VideoProcessor.startProcessing(p, event).catch((e) => {
+                event.sender.send('updateProjectFailed', {'id': p.id});
+                throw e;
+            }));
+        });
+
+    Promise.all(input).then(() => {
+        event.sender.send('processVideosFinished');
+    });
+
+    event.sender.send('processVideosStarted');
+});
