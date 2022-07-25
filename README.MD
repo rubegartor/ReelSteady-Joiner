@@ -6,7 +6,7 @@ _Merge your video files extracted from GoPro without losing quality or gyroscope
 
 _Perfect for long videos like long range drone footage_
 
-Supported on **Windows** & **MacOS**
+Supported on **Windows** & **MacOS** with GoPro Hero 6, 7, 8, 9, 10 and MAX
 
 ## Starting 🚀
 
@@ -16,31 +16,22 @@ _Download and execute installer (**[Releases tab](https://github.com/rubegartor/
 
 1. Choose your settings
 
-![Settings](https://i.imgur.com/FsEBUaB.png)
+![Settings](https://i.imgur.com/A3vTKBF.png)
 
-2. Select all of your mp4 files to concatenate (Normally 4GB chunks or less) and start merge process
-   1. AutoScan Option let you find chapters easily
+2. Select all of your mp4/360 files to concatenate (Normally 4GB chunks or less) and start merge process
 
-![Select files](https://i.imgur.com/Bv18QPR.png)
-![Select files](https://i.imgur.com/iXB6pzW.png)
+![Select files](https://i.imgur.com/na3SE7l.png)
+![Select files](https://i.imgur.com/zMIcsCo.png)
 
+3. Customize your projects
 
-3. Let ReelSteady Joiner work and combine all the videos selected
+![Customize](https://i.imgur.com/wdao3Gz.png)
 
-![Processing videos](https://i.imgur.com/DN27x4R.png)
+4. Let ReelSteady Joiner work and combine all the videos
 
-
-4. Check the output video file and stabilize it with ReelSteady
-
-![Finished](https://i.imgur.com/rx6jk6W.png)
-
-- Video explanation here (Thanks to TRONCAT FPV) ([https://www.youtube.com/watch?v=HiTVtU1SDIc](https://www.youtube.com/watch?v=HiTVtU1SDIc)):
-
-[![Video Tutorial](https://img.youtube.com/vi/HiTVtU1SDIc/0.jpg)](https://www.youtube.com/watch?v=HiTVtU1SDIc)
+![Processing videos](https://i.imgur.com/Gjawlv7.png)
 
 ---
-
-**Warning**: If you process parts that do not belong to the same run, the final video file will be corrupted (this will not happen with auto scan option enabled)
 
 ### Troubleshooting 🔎
 _(Known issues and recommendations)_
@@ -50,8 +41,7 @@ _(Known issues and recommendations)_
 
 - Antiviruses could interfere with file manipulation, if you have troubles, try to disable it
 
-- It's mandatory that the files keep their original names in order to be manipulated correctly
-  - Without AutoScan option enabled, it may work if the video names correspond alphabetically to the recording order
+- MacOS ARM builds are having issues on certain devices, the issue has not yet been identified. [#26](https://github.com/rubegartor/ReelSteady-Joiner/issues/26)
 
 ### Update ReelSteady Joiner ⚙️
 

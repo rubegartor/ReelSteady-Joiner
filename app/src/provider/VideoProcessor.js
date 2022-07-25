@@ -1,19 +1,19 @@
 const path = require('path');
-const log = require('electron-log');
-const {app} = require('electron').remote;
-const {remote} = require('electron');
-const {spawn, execFile, exec} = require('child_process');
-const Commons = require(path.join(__dirname, '../provider/Commons'));
+const os = require('os');
 const fs = require('fs');
-const ffmpegPath = require('ffmpeg-static').replace(
-    'app.asar',
-    'app.asar.unpacked'
-);
+const log = require('electron-log');
+const {app} = require('electron');
+const {spawn, execFile, exec} = require('child_process');
+const ffmpegPath = require('ffmpeg-static').replace('app.asar', 'app.asar.unpacked');
+const ffmpeg = require('fluent-ffmpeg');
+const Commons = require('../provider/Commons');
+const ProjectType = require('../entity/ProjectType');
+
+ffmpeg.setFfmpegPath(ffmpegPath);
 
 //Exceptions
-const NotConsecutiveChaptersError = require(path.join(__dirname, '../exceptions/NotConsecutiveChaptersError'));
+const NotConsecutiveChaptersError = require('../exceptions/NotConsecutiveChaptersError');
 
-const config = remote.getGlobal('globalConfig');
 const exePath = Commons.isDev() ? app.getAppPath() : path.dirname(process.execPath);
 const macExePath = path.join(app.getAppPath(), '..', '..');
 
@@ -21,7 +21,7 @@ let exifToolConfigPath = undefined;
 let gyroProcessPath = undefined;
 let exiftool = undefined;
 
-switch (remote.getGlobal('platform')) {
+switch (os.platform()) {
     case 'darwin':
         gyroProcessPath = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'udtacopy') : path.join(macExePath, 'app', 'bin', 'mac', 'udtacopy');
         exiftool = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'exiftool', 'exiftool') : path.join(macExePath, 'app', 'bin', 'mac', 'exiftool', 'exiftool');
@@ -38,335 +38,277 @@ switch (remote.getGlobal('platform')) {
         break;
 }
 
-const ProgressBar = require(path.join(__dirname, '../components/ProgressBar'));
-const Alert = require(path.join(__dirname, '../components/Alert'));
-
 class VideoProcessor {
-    statusElem = document.getElementById('status');
-    selectFileBtn = document.getElementById('selectFiles');
-    processVideosBtn = document.getElementById('processVideos');
-    progressBar = new ProgressBar(document.getElementById('progressBar'));
-    projectSavePathBtn = document.getElementById('projectSavePathBtn');
+    /**
+     * Function to process projects
+     *
+     * @param project
+     * @param event
+     */
+    static async startProcessing(project, event) {
+        event.sender.send('setMaxProjectProgress', {'id': project.id, 'max': project.duration});
+        this.createLog(project);
+        return new Promise((resolve, reject) => {
+            const waitFor = (cd, cb) => { cd() ? cb() : setTimeout(waitFor.bind(null, cd, cb), 250) };
 
+            waitFor(() => { return project.available }, () => {
+                let projectError = false;
 
-    //FFmpeg errors
-    ffmpegNoSpaceLeftError = 'No space left on device';
-    ffmpegCantOpen = 'Impossible to open';
+                this.logGeneralInfo();
+                const outputName = this.generateOutputName(project);
+                const projectPath = this.createProjectDir(project);
+                const concatFilePath = this.createConcatFile(project);
+                const outputFilePath = path.join(projectPath, outputName);
+                this.logProjectInfo(project, outputName, projectPath, concatFilePath, outputFilePath);
 
-    //Flags
-    ffmpegBreak = false;
-    udtacopyBreak = false;
+                this.getAllStreamMaps(projectPath).then(streamMaps => {
+                    return streamMaps.map((m) => { return `-map 0:${m}` });
+                }).catch((e) => {
+                    reject(e);
+                }).then(maps => {
+                    const inputOptions = ['-y', '-f concat', '-safe 0'];
+                    let outputOptions = [ '-c copy', '-c:a aac', ...maps, '-ignore_unknown'];
+
+                    return new Promise((resolve, reject) => {
+                        // noinspection JSUnresolvedFunction
+                        new ffmpeg(concatFilePath)
+                            .on('progress', (progress) => {
+                                try {
+                                    event.sender.send('updateProjectProgress', {'id': project.id, 'progress': progress});
+                                } catch (_) {} //Skip error when killing ffmpeg process on application close
+                            })
+                            .on('error', (err, stdout, stderr) => {
+                                reject({'err': err, 'stdout': stdout, 'stderr': stderr});
+                            })
+                            .on('start', (cmd) => log.debug(cmd))
+                            .on('stderr', (stderr) => log.debug(stderr))
+                            .on('end', resolve)
+                            .inputOptions(inputOptions)
+                            .outputOptions(outputOptions)
+                            .save(outputFilePath);
+                    }).catch((err) => {
+                        projectError = true;
+                        reject(err);
+                    });
+                }).then(() => {
+                    if (!projectError) return this.processGyro(outputName, projectPath, project.filePaths[0]);
+                }).catch((e) => {
+                    projectError = true;
+                    reject(e);
+                }).then(() => {
+                    if (!projectError) return this.setCustomMetadata(project.filePaths[0], outputFilePath);
+                }).catch((e) => {
+                    projectError = true;
+                    reject(e);
+                }).then(() => {
+                    if (!projectError) {
+                        // Rename output file if project type is 360
+                        if (project.type === ProjectType.PROJECT_360) {
+                            const outputNameBase = path.basename(outputName, path.extname(outputName))
+                            fs.renameSync(outputFilePath, path.join(projectPath, outputNameBase + '.' + ProjectType.PROJECT_360));
+                        }
+
+                        Commons.unlinkIfExists(concatFilePath);
+                        project.completed = true;
+                        event.sender.send('updateProjectCompleted', {'id': project.id});
+                        resolve();
+                    }
+                }).catch((e) => {
+                    projectError = true;
+                    reject(e);
+                });
+            });
+        });
+    }
 
     /**
-     * Function to process all video files
+     * Function that initialize the log
      *
-     * @param filePaths array of video files paths
+     * @param project
      */
-    startProcessing(filePaths) {
-        //Calculate log path and filename
-        let logName = (Commons.dateToStr(new Date()) + '.log').replace(':', '-');
-        let logPathBase = remote.getGlobal('globalLogPathBase');
-        let logPath = path.join(logPathBase, logName);
+    static createLog(project) {
+        const logName = `${project.name}_${Commons.dateToStr(new Date())}'.log'`.replace(':', '-');
+        const logPathBase = globalLogPathBase;
+        log.transports.file.resolvePath = () => path.join(logPathBase, logName);
+    }
 
-        log.transports.file.resolvePath = () => logPath;
-
+    /**
+     * Function that logs general info about RSJoiner paths, etc.
+     */
+    static logGeneralInfo() {
         //Debug info
-        log.info('OS: ' + remote.getGlobal('platform') + ' - ' + remote.getGlobal('platformRelease'));
-        log.info('isDev?: ' + Commons.isDev());
-        log.info('config: ' + JSON.stringify(config));
-        log.info('exePath: ' + exePath);
-        log.info('macExePath: ' + macExePath);
-        log.info('ffmpegPath: ' + ffmpegPath);
-        log.info('gyroProcessPath: ' + gyroProcessPath);
-        log.info('exiftool: ' + exiftool);
-        log.info('exiftool config: ' + exifToolConfigPath);
+        log.info(`OS: ${os.platform()} - ${os.release()}`);
+        log.info(`version: ${Commons.version}`);
+        log.info(`isDev?: ${Commons.isDev()}`);
+        log.info(`config: ${JSON.stringify(config, null, 2)}`);
+        log.info(`exePath: ${exePath}`);
+        log.info(`macExePath: ${macExePath}`);
+        log.info(`ffmpegPath: ${ffmpegPath}`);
+        log.info(`gyroProcessPath: ${gyroProcessPath}`);
+        log.info(`exiftool: ${exiftool}`);
+        log.info(`exiftool config: ${exifToolConfigPath}`);
+    }
 
-        this.selectFileBtn.setAttribute('disabled', 'disabled');
-        this.processVideosBtn.setAttribute('disabled', 'disabled');
-        this.projectSavePathBtn.setAttribute('disabled', 'disabled');
+    /**
+     * Function that logs general info about project
+     */
+    static logProjectInfo(project, outputName, projectPath, concatFilePath, outputFilePath) {
+        log.info(`Project: ${JSON.stringify(project, null, 2)}`);
+        log.info(`outputName: ${outputName}`);
+        log.info(`projectPath: ${projectPath}`);
+        log.info(`concatFilePath: ${concatFilePath}`);
+        log.info(`outputFilePath: ${outputFilePath}`);
+        log.info('File sizes:');
+        for (const filePath of project.filePaths) {
+            log.info(`${filePath} size: ${Commons.getFileSize(filePath)}B${(project.filePaths.indexOf(filePath) === (project.filePaths.length - 1) ? '\n' : '')}`);
+        }
+    }
 
-        this.progressBar.color = ProgressBar.COLOR_ORANGE;
-        this.progressBar.maximum = 100;
-        this.progressBar.value = 0;
-
-        log.debug('## Starting video processing');
-        log.debug('FilePaths: ' + filePaths.join(', '));
-
-        filePaths = filePaths.sort();
-
-        log.debug('FilePaths sorted: ' + filePaths.join(', ') + '\n');
-
-        //Get file sizes in bytes
-        log.debug('Getting the size of video files');
-        for (let filePath of filePaths) {
-            log.debug(filePath + ' size: ' + Commons.getFileSize(filePath) + 'B' + (filePaths.indexOf(filePath) === (filePaths.length - 1) ? '\n' : ''));
+    /**
+     * Function to create project path
+     *
+     * @param project
+     * @returns {string} created project path
+     */
+    static createProjectDir(project) {
+        if (!fs.existsSync(path.join(config.savePath, project.name))) {
+            fs.mkdirSync(path.join(config.savePath, project.name));
         }
 
-        log.debug('Starting getModifiedDate');
-        this.getModifiedDate(filePaths[0]).then((value) => {
-            log.debug('ModifiedDate: ' + value)
-            //Here date format is "dd:mm:YYYY HH:MM:SS", need to convert date part to "dd/mm/YYYY HH:MM:SS" (or whatever locale is used)
-            let dateParts = value.split(' ');
-            dateParts[0] = dateParts[0].replaceAll(':', '/');
-            let modifiedDate = new Date(dateParts.join(' '));
-            let projectDir = Commons.dateToStr(modifiedDate).replace(':', '-');
+        return path.join(config.savePath, project.name);
+    }
 
-            log.debug('ProjectDir: ' + projectDir);
+    /**
+     * Function that generates output name for the project
+     *
+     * @param project
+     * @returns {string} generated output name
+     */
+    static generateOutputName(project) {
+        let outputName = path.parse(project.files[0]).name + '_joined.mp4';
+        if (fs.existsSync(path.join(config.savePath, project.name, outputName))) {
+            const dirFiles = Commons.readDir(path.join(config.savePath, project.name));
+            const fileRegex = /^G[HXS]\d{6}_joined(_\d*)?\.(MP4|mp4|360)/;
+            let maxNumber = 1;
 
-            if (!fs.existsSync(path.join(config.savePath, projectDir))) {
-                log.debug('Creating projectDir path');
-                fs.mkdirSync(path.join(config.savePath, projectDir));
-                log.debug('ProjectDir path created');
-            }
+            for (const file of dirFiles) {
+                if (fileRegex.test(file)) {
+                    const split = path.parse(file).name.split('_');
 
-            log.debug('Calculating output filename');
-            //Calculate output video filename
-            let outputName = path.parse(filePaths[0]).name + '_joined.mp4';
-            if (fs.existsSync(path.join(config.savePath, projectDir, outputName))) {
-                let dirFiles = Commons.readDir(path.join(config.savePath, projectDir));
-                let maxNumber = 1;
-                let fileRegex = /^G[HX]\d{6}_joined(_\d*)?\.(MP4|mp4)/;
-
-                for (let file of dirFiles) {
-                    if (fileRegex.test(file)) {
-                        let splitted = path.parse(file).name.split('_');
-
-                        if (splitted.length > 2 && !isNaN(parseInt(splitted[2])) && typeof parseInt(splitted[2]) === 'number') {
-                            if (parseInt(splitted[2]) > maxNumber - 1) {
-                                maxNumber = parseInt(splitted[2]) + 1;
-                            }
+                    if (split.length > 2 && !isNaN(parseInt(split[2])) && typeof parseInt(split[2]) === 'number') {
+                        if (parseInt(split[2]) > maxNumber - 1) {
+                            maxNumber = parseInt(split[2]) + 1;
                         }
                     }
                 }
-
-                outputName = path.parse(filePaths[0]).name + '_joined_' + maxNumber + '.mp4';
             }
 
-            log.debug('Output filename is: ' + outputName);
-            log.debug('Creating concat.txt file');
+            outputName = `${path.parse(project.files[0]).name}_joined_${maxNumber}.mp4`;
+        }
 
-            let concatText = '';
-            for (let filePath of filePaths) {
-                concatText += 'file \'' + Commons.scapePath(filePath) + '\'\n';
-            }
+        return outputName;
+    }
 
-            log.debug('concat.txt file content:\n' + concatText);
+    /**
+     * Function that creates concat file and his content
+     *
+     * @param project
+     * @returns {string} concat.txt path file
+     */
+    static createConcatFile(project) {
+        let concatText = '';
+        for (const filePath of project.filePaths) {
+            concatText += 'file \'' + Commons.scapePath(filePath) + '\'\n';
+        }
 
-            fs.writeFileSync(path.join(config.savePath, projectDir, 'concat.txt'), concatText, 'utf-8');
+        log.debug(`concat.txt content:\n${concatText}`);
 
-            log.debug('concat.txt file created');
+        fs.writeFileSync(path.join(config.savePath, project.name, 'concat.txt'), concatText, 'utf-8');
 
-            log.debug('Getting getTotalVidDuration');
-            this.getTotalVidDuration(filePaths).then(totalDuration => {
-                log.debug('Total duration is: ' + totalDuration + '\n');
-                this.progressBar.maximum = totalDuration;
-
-                this.getAllStreamMaps(path.join(config.savePath, projectDir)).then(streamMaps => {
-                    let args = [
-                        '-y',
-                        '-f', 'concat',
-                        '-safe', '0',
-                        '-i', 'concat.txt',
-                        '-c', 'copy',
-                        '-ignore_unknown'
-                    ];
-
-                    for (let streamMap of streamMaps) {
-                        args.push('-map', '0:' + streamMap);
-                    }
-
-                    args.push(outputName);
-
-                    // noinspection JSCheckFunctionSignatures
-                    let proc = spawn(ffmpegPath, args, {cwd: path.join(config.savePath, projectDir)});
-
-                    log.debug('FFmpeg cwd: ' + path.join(config.savePath, projectDir))
-                    log.debug('FFmpeg proc object: ' + JSON.stringify(proc));
-
-                    proc.stderr.setEncoding('utf8')
-                    proc.stderr.on('data', (data) => {
-                        log.debug(data);
-
-                        if (!this.ffmpegBreak && data.includes(this.ffmpegNoSpaceLeftError)) {
-                            this.ffmpegBreak = true;
-                            let alert = new Alert('Error: ' + this.ffmpegNoSpaceLeftError, Alert.ALERT_DANGER, 0);
-                            alert.width = '300px';
-                            Alert.appendToContainer(alert.toHTML());
-
-                            log.error(this.ffmpegNoSpaceLeftError);
-                        }
-
-                        if (!this.ffmpegBreak && data.includes(this.ffmpegCantOpen)) {
-                            this.ffmpegBreak = true;
-                            Alert.appendToContainer(new Alert(data.split(']')[1].split('concat.txt')[0], Alert.ALERT_DANGER, 0).toHTML());
-
-                            log.error(this.ffmpegCantOpen);
-                        }
-
-                        if (this.ffmpegBreak) {
-                            proc.kill();
-                            Commons.resetStatus();
-                            this.progressBar.color = ProgressBar.COLOR_RED;
-                            this.projectSavePathBtn.removeAttribute('disabled');
-                        } else {
-                            this.statusElem.innerText = 'Processing videos';
-                            this.statusElem.classList.add('loading');
-                            let progressValue = this.progressBar.getProgress(data);
-                            if (!isNaN(progressValue)) {
-                                this.progressBar.value = progressValue;
-                            }
-                        }
-                    });
-
-                    proc.on('close', () => {
-                        Commons.unlinkIfExists(path.join(config.savePath, projectDir, 'concat.txt')) //The file concat.txt is deleted because it's useless for the user
-                        log.debug('concat.txt file deleted');
-
-                        if (!this.ffmpegBreak) {
-                            log.debug('Starting processing of gyro data');
-                            this.processGyro(outputName, projectDir, filePaths[0]);
-                        } else {
-                            //Remove output video file
-                            let invalidFilePath = path.join(config.savePath, projectDir, outputName);
-                            Commons.unlinkIfExists(invalidFilePath);
-
-                            //Remove project dir if it's empty
-                            let invalidProjectDir = path.join(config.savePath, projectDir);
-                            if (fs.existsSync(invalidProjectDir) && !Commons.readDir(invalidProjectDir).length) {
-                                fs.rmdirSync(path.join(config.savePath, projectDir));
-                            }
-                        }
-                    });
-                }).catch((err) => {
-                    Commons.resetStatus();
-                    Alert.appendToContainer(new Alert('Unable to get video stream maps.', Alert.ALERT_DANGER, 5000).toHTML());
-                    log.error(err);
-                })
-            }).catch((err) => {
-                Commons.resetStatus();
-                Alert.appendToContainer(new Alert('Unable to get total videos duration times', Alert.ALERT_DANGER, 5000).toHTML());
-                log.error(err);
-            });
-        }).catch((err) => {
-            Commons.resetStatus();
-            Alert.appendToContainer(new Alert('Unable to get the modification date of the video file', Alert.ALERT_DANGER, 5000).toHTML());
-            log.error(err);
-        });
+        return path.join(config.savePath, project.name, 'concat.txt');
     }
 
     /**
      * Function to embed the gyroscope data
      *
      * @param outputName
-     * @param projectDir
+     * @param projectPath
      * @param firstVideo
      */
-    processGyro(outputName, projectDir, firstVideo) {
-        let args = [firstVideo, outputName];
-        // noinspection JSCheckFunctionSignatures
-        let proc = spawn(gyroProcessPath, args, {cwd: path.join(config.savePath, projectDir)});
+    static processGyro(outputName, projectPath, firstVideo) {
+        return new Promise((resolve, reject) => {
+            const args = [firstVideo, outputName];
+            // noinspection JSCheckFunctionSignatures
+            const proc = spawn(gyroProcessPath, args, {cwd: projectPath});
 
-        log.debug('Udtacopy cwd: ' + path.join(config.savePath, projectDir))
-        log.debug('Udtacopy proc object: ' + JSON.stringify(proc));
+            log.debug(`procesGryro: ${JSON.stringify(proc)}`);
 
-        proc.stderr.on('data', (data) => {
-            proc.kill();
-            this.udtacopyBreak = true;
-            log.error('Udtacopy stderr data: ' + data);
-        });
+            proc.stderr.on('data', (data) => {
+                proc.kill();
+                log.error(`Udtacopy stderr data: ${data}`);
+                reject(data);
+            });
 
-        proc.stdout.on('data', (data) => {
-            log.debug('Udtacopy stdout data: ' + data);
-        });
+            proc.stdout.on('data', (data) => {
+                log.debug(`Udtacopy stdout data: ${data}`);
+            });
 
-        proc.on('close', () => {
-            log.debug('Udtacopy processing finished');
-
-            //Checks if udtacopy throws error
-            if (!this.udtacopyBreak) {
-                log.debug('Starting metadata file editing');
-                this.setCustomMetadata(firstVideo, path.join(config.savePath, projectDir, outputName), projectDir);
-            } else {
-                this.progressBar.color = ProgressBar.COLOR_RED;
-                Alert.appendToContainer(new Alert('Gyro data could not be processed', Alert.ALERT_DANGER, 0).toHTML());
-                Commons.unlinkIfExists(path.join(config.savePath, projectDir, outputName)); //Remove not completed output video file
-
-                //Remove project dir if it's empty
-                let invalidProjectDir = path.join(config.savePath, projectDir);
-                if (fs.existsSync(invalidProjectDir) && !Commons.readDir(invalidProjectDir).length) {
-                    fs.rmdirSync(path.join(config.savePath, projectDir));
-                }
-
-                Commons.resetStatus();
-            }
+            proc.on('close', resolve);
         });
     }
 
     /**
-     * Function that gets the modification date of the first selected file
+     * Function that gets the modification date of the given file
      *
      * @param firstVideo
      * @returns {Promise}
      */
-    getModifiedDate(firstVideo) {
+    static async getModifiedDate(firstVideo) {
         return new Promise((resolve, reject) => {
             // noinspection JSCheckFunctionSignatures
             execFile(exiftool, ['-config', exifToolConfigPath, '-s', '-s', '-s', '-time:FileModifyDate', firstVideo], (error, stdout, stderr) => {
-                error ? reject({'error': error, 'stderr': stderr}) : resolve(stdout);
+                error ? reject({'error': error, 'stderr': stderr}) : resolve(stdout.trim().replace('\r\n', ''));
             });
         });
     }
 
     /**
-     * Function that sets the original creation date of the first selected file to the new output file.
+     * Function that sets the original creation date of the given file to the new output file.
      *
-     * @param firstVideo
+     * @param project
      * @param outputVideo
-     * @param projectDir
      */
-    setCustomMetadata(firstVideo, outputVideo, projectDir) {
-        log.debug('Getting modifiedDate and persisting into the output file');
-        this.getModifiedDate(firstVideo).then((date) => {
-            // noinspection JSCheckFunctionSignatures
-            execFile(exiftool, [
+    static async setCustomMetadata(project, outputVideo) {
+        return new Promise(resolve => {
+            const exec = execFile(exiftool, [
                 '-config',
                 exifToolConfigPath,
-                '-FileModifyDate="' + date + '"',
+                `-FileModifyDate="${project.modifiedDate}"`,
                 outputVideo
-            ], () => {
-                log.debug('modifiedDate persisted into the output file');
-                this.progressBar.color = ProgressBar.COLOR_GREEN;
-                this.statusElem.innerHTML = 'Finished! (<a href="javascript:void(0);" class="openPath" data-path="' + projectDir + '">Open in explorer</a>)';
-                this.statusElem.classList.add('text-success');
-                this.statusElem.classList.remove('loading');
-                this.selectFileBtn.removeAttribute('disabled');
-                this.projectSavePathBtn.removeAttribute('disabled');
+            ], resolve);
 
-                log.debug('Finished and reloading latest projects');
-                Commons.loadLatestProjects();
-            });
-        }).catch((err) => {
-            throw err;
-        });
+            log.debug(`customMetadata: ${JSON.stringify(exec)}`);
+        })
     }
 
     /**
-     * Function that get all stream maps available in the video files
+     * Function that gets all stream maps available in the project video files
      *
      * @param cwdPath
      * @returns {Promise<[string]>}
      */
-    getAllStreamMaps(cwdPath) {
+    static async getAllStreamMaps(cwdPath) {
         return new Promise((resolve, reject) => {
-            const cmd = ['"' + ffmpegPath + '"', '-f concat', '-safe 0', '-i concat.txt', '-y'];
-            exec(cmd.join(' '), {cwd: cwdPath}, function (error, stdout, stderr) {
-                log.debug('getAllStreamMaps cwd: ' + cwdPath)
-                log.debug('getAllStreamMaps output: \n' + stderr);
+            const cmd = `"${ffmpegPath}" -f concat -safe 0 -i concat.txt -y`;
+            exec(cmd, {cwd: cwdPath}, function (error, stdout, stderr) {
                 try {
                     const searchStr = 'Stream #0:';
                     // noinspection JSUnresolvedFunction
-                    const streamMaps = [...stderr.matchAll(new RegExp(searchStr, 'gi'))].map(a => a.input.substr(a.index + searchStr.length, 1));
-                    log.debug('Found ' + streamMaps.length + ' stream maps');
+                    const streamMaps = [...stderr.matchAll(new RegExp(searchStr, 'gi'))]
+                        .map(a => a.input.substring(a.index + searchStr.length, (a.index + searchStr.length) + 1));
+
+                    log.debug(`Extracted maps: ${streamMaps.join(', ')}`);
+
                     resolve(streamMaps);
                 } catch (e) {
                     reject({'error': error, 'stderr': stderr});
@@ -376,23 +318,19 @@ class VideoProcessor {
     }
 
     /**
-     * Function that get total duration of all selected files
+     * Function that get total duration of project video files
      *
-     * @param videoFiles
+     * @param project
      * @returns {Promise<number>}
      */
-    getTotalVidDuration(videoFiles) {
-        let promises = [];
-        for (let vidFile of videoFiles) {
-            let prom = new Promise(function (resolve, reject) {
-                let cmd = '"' + ffmpegPath + '" -i "' + vidFile + '"';
-                exec(cmd, function (error, stdout, stderr) {
+    static async getTotalVidDuration(project) {
+        const promises = [];
+        for (const vidFile of project.filePaths) {
+            const prom = new Promise(function (resolve, reject) {
+                exec(`"${ffmpegPath}" -i "${vidFile}"`, (error, stdout, stderr) => {
                     if (stderr.includes('Duration:')) {
-                        log.debug('getTotalVidDuration output: \n' + stderr);
-                        //Here can't handle exceptions easily because output is really an error :D
-                        let output = stderr.substr(stderr.indexOf('Duration:') + 9, stderr.length);
-                        let duration = output.substr(0, output.indexOf(','));
-                        log.debug('Duration (' + vidFile + '): ' + duration);
+                        const output = stderr.substring(stderr.indexOf('Duration:') + 9, stderr.length);
+                        const duration = output.substring(0, output.indexOf(','));
                         resolve(duration);
                     } else {
                         reject({'error': error, 'stderr': stderr});
@@ -406,14 +344,12 @@ class VideoProcessor {
         return Promise.all(promises).then((values) => {
             let secs = 0;
 
-            for (let time of values) {
-                let parsedTime = time.trim().replace('\r\n', '').split(':');
+            for (const time of values) {
+                const parsedTime = time.trim().replace('\r\n', '').split(':');
                 secs += parsedTime[0] * 3600;
                 secs += parsedTime[1] * 60;
                 secs += parseInt(parsedTime[2]);
             }
-
-            log.debug('Final video duration: ' + secs + ' seconds.');
 
             return secs;
         });
@@ -426,20 +362,20 @@ class VideoProcessor {
      * @returns {{}}
      */
     static scanGoProDir(dirPath) {
-        let goProGroupedFiles = {};
-        let goProFiles = [];
-        let files = Commons.readDir(dirPath);
+        const goProGroupedFiles = {};
+        const goProFiles = [];
+        const files = Commons.readDir(dirPath);
 
         //Get GoPro files
-        for (let file of files) {
-            if (/^G[HX]\d{6}\.(MP4|mp4)/.test(file)) {
+        for (const file of files) {
+            if (/^G[HXS]\d{6}\.(MP4|mp4|360)/.test(file) && !goProFiles.includes(file)) {
                 goProFiles.push(file);
             }
         }
 
         //Group chapters
-        for (let goProFile of goProFiles) {
-            let fileNumber = goProFile.substr(4, 4);
+        for (const goProFile of goProFiles) {
+            const fileNumber = goProFile.substring(4, 8);
 
             if (goProGroupedFiles[fileNumber]) {
                 goProGroupedFiles[fileNumber].push(goProFile);
@@ -457,11 +393,11 @@ class VideoProcessor {
         for (const [key, values] of Object.entries(goProGroupedFiles)) {
             let lastChapterNum = 1;
 
-            for (let chapterFile of values) {
-                let chapterNum = chapterFile.substr(2, 2);
+            for (const chapterFile of values) {
+                const chapterNum = chapterFile.substring(2, 4);
 
                 if (parseInt(chapterNum) !== lastChapterNum) {
-                    throw new NotConsecutiveChaptersError('Group (' + key + ') have not consecutive chapters');
+                    throw new NotConsecutiveChaptersError(`Group (${key}) have not consecutive chapters`);
                 } else {
                     lastChapterNum++;
                 }
@@ -469,6 +405,32 @@ class VideoProcessor {
         }
 
         return goProGroupedFiles;
+    }
+
+    /**
+     * Function that generates the thumbnail of the project
+     *
+     * @param filePath
+     * @param uuid
+     * @returns {Promise<string>} filePath of thumbnail
+     */
+    static async getThumbnail(filePath, uuid) {
+        return new Promise((resolve, reject) => {
+            // noinspection JSUnresolvedFunction
+            new ffmpeg(filePath)
+                .on('end', () => {
+                    resolve(path.join(os.tmpdir(), `${uuid}.png`));
+                })
+                .on('error', function(err, stdout, stderr) {
+                    reject({'error': err, 'stdout': stdout, 'stderr': stderr});
+                })
+                .takeScreenshots({
+                    timemarks: [ '00:00:00.000' ],
+                    filename: `${uuid}.png`,
+                    folder: os.tmpdir(),
+                    size: '320x240'
+                });
+        });
     }
 }
 

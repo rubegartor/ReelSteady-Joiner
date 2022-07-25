@@ -18,62 +18,44 @@
             <span class="subtitle">Select the videos you want to merge without losing the gyroscope data</span>
         </div>
         <div class="buttonContainer">
-            <button type="button" class="button-green" id="settingsBtn" style="padding: 0 16px 0 16px;">
-                <img src="../../app/assets/images/settings.svg" alt="" style="padding-top: 4px;"/>
-            </button>
+            <button type="button" class="button-green" id="settingsBtn" style="padding: 0 16px 0 16px;"></button>
             <button type="button" class="button-orange" id="selectFiles">Select files</button>
             <button type="button" class="button-green" id="processVideos" disabled>Merge!</button>
         </div>
-        <div class="processDataContainer">
-            <div>
-                <strong>Status: </strong><span id="status" class="loading">Waiting files</span>
-            </div>
-        </div>
-    </div>
-    <div class="progress-container">
-        <progress id="progressBar" max="100" value="0" class="progress-orange"></progress>
     </div>
     <hr style="margin-top: 25px;">
-    <div class="lastProjectContainer" id="lastProjectContainer"></div>
+    <div class="projectContainer" id="projectContainer">
+        <div class="empty-item">🔎 Add files to start merging!</div>
+    </div>
     <div class="repo">
-        <img href="https://github.com/rubegartor/ReelSteady-Joiner/releases" src="../../app/assets/images/update.svg"
-             alt="" class="openExternal blink" style="display: none;" title="Update" id="updateLink"/>
-        <img href="https://github.com/rubegartor/ReelSteady-Joiner" src="../../app/assets/images/github.svg" alt=""
+        <img href="https://github.com/rubegartor/ReelSteady-Joiner/releases" src="../assets/images/update.svg"
+             alt="" class="openExternal blink" style="display: none;" title="Update available" id="updateLink"/>
+        <img href="https://github.com/rubegartor/ReelSteady-Joiner" src="../assets/images/github.svg" alt=""
              class="openExternal" title="Github page"/>
     </div>
 </div>
-<div id="autoScanWrapperBg" style="display: none;">
-    <div id="autoScanWrapper">
+<div id="autoScanWrapperBg" class="modalWrapper" style="display: none;">
+    <div id="autoScanWrapper" class="modalContent" style="height: 380px;">
+        <div class="close close-modal"></div>
         <div class="title">Chapters</div>
         <div class="groupContainer" id="groupContainer"></div>
         <div class="buttonContainer">
-            <button type="button" class="button-gray" id="autoScanWrapperCloseBtn">Close</button>
-            <button type="button" class="button-green" id="chapterGroupContinueBtn" style="display: none;">Continue
-            </button>
+            <button type="button" class="button-green" id="chapterGroupContinueBtn" style="display: none;">Continue</button>
         </div>
+    </div>
+</div>
+<div id="editProjectWrapper" class="modalWrapper" style="display: none;">
+    <div class="modalContent">
+        <div class="close close-modal"></div>
+        <div class="title">Edit project name</div>
+        <input type="text" id="projectName" class="projectNameInput" maxlength="128"/>
+        <div class="buttonContainer onclose-empty" id="editProjectButtonContainer"></div>
     </div>
 </div>
 <div id="settingsWrapper" style="display: none;">
     <div class="title">
-        <div class="goBack" id="settingsGoBackBtn">
-            <img src="../../app/assets/images/caret-left.svg" alt="Go back"/>
-        </div>
+        <div class="goBack" id="settingsGoBackBtn"></div>
         Settings
-    </div>
-    <div class="configLine">
-        <div>
-            <div class="configName">Auto scan mode</div>
-            <div class="configDescription">
-                This mode scan automatically selected directory in search of all video chunks to merge<br>
-                (Only works from GoPro Hero 6)
-            </div>
-        </div>
-        <div>
-            <label class="switch">
-                <input type="checkbox" id="autoScanOption">
-                <span class="slider round"></span>
-            </label>
-        </div>
     </div>
     <div class="configLine">
         <div>
@@ -89,20 +71,6 @@
     </div>
     <div class="configLine">
         <div>
-            <div class="configName">Group projects</div>
-            <div class="configDescription">
-                Group latest project files by video file ID
-            </div>
-        </div>
-        <div>
-            <label class="switch">
-                <input type="checkbox" id="groupProjectsOption">
-                <span class="slider round"></span>
-            </label>
-        </div>
-    </div>
-    <div class="configLine">
-        <div>
             <div class="configName">Logs</div>
             <div class="configDescription">
                 Open the path where the logs are stored
@@ -114,5 +82,5 @@
     </div>
 </div>
 </body>
-<script src="../app.js"></script>
+<script src="../render.js"></script>
 </html>
