@@ -1,12 +1,10 @@
 const path = require('path');
-const remote = require('electron').remote;
 const log = require('electron-log');
 const unhandled = require('electron-unhandled');
 const {openNewGitHubIssue, debugInfo} = require('electron-util');
 
 module.exports = function (logPathBase) {
-    logPathBase = logPathBase !== undefined ? logPathBase : remote.getGlobal('globalLogPathBase');
-    let logPath = path.join(logPathBase, 'error.log');
+    const logPath = path.join(logPathBase, 'error.log');
 
     log.transports.file.resolvePath = () => logPath;
 

@@ -1,8 +1,9 @@
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
+const {ipcRenderer} = require('electron');
 
-const ConfigSaveError = require(path.join(__dirname, '../exceptions/ConfigSaveError'));
+const ConfigSaveError = require('../exceptions/ConfigSaveError');
 
 const CONFIG_FILE = 'config.json';
 const CONFIG_DIR_WIN = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner');
@@ -13,9 +14,7 @@ const CONFIG_DIR = os.platform() === 'darwin' ? CONFIG_DIR_MAC : CONFIG_DIR_WIN;
 class Config {
     constructor() {
         // noinspection JSUnusedGlobalSymbols
-        this.autoScan = false;
         this.savePath = '';
-        this.groupProjects = false;
     }
 
     loadConfig() {
@@ -24,13 +23,21 @@ class Config {
         }
 
         if (!fs.existsSync(path.join(CONFIG_DIR, CONFIG_FILE))) {
-            this.saveConfig();
+            try {
+                this.saveConfig();
+            } catch (e) {
+                if (e instanceof ConfigSaveError) {
+                    ipcRenderer.send('spawnNotification', {'message': e.toString(), 'type': 'danger', 'width': 350, 'timeout': 5000});
+                } else {
+                    throw e;
+                }
+            }
         }
 
         fs.readFile(path.join(CONFIG_DIR, CONFIG_FILE), 'utf8', (err, data) => {
-            let jsonData = JSON.parse(data);
+            const jsonData = JSON.parse(data);
 
-            for (let key in jsonData) {
+            for (const key in jsonData) {
                 if (jsonData.hasOwnProperty(key) && typeof this[key] !== 'undefined') {
                     this[key] = jsonData[key];
                 }
@@ -40,9 +47,7 @@ class Config {
 
     saveConfig() {
         fs.writeFile(path.join(CONFIG_DIR, CONFIG_FILE), JSON.stringify(this), (err) => {
-            if (err) {
-                throw new ConfigSaveError('Unable to save settings');
-            }
+            if (err) throw new ConfigSaveError('Unable to save settings');
         });
     }
 }
