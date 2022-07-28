@@ -1,7 +1,8 @@
 const {app, BrowserWindow} = require('electron')
 const os = require('os')
+const path = require('path')
 
-const iconPath = './app/assets/images/icon.png'
+const iconPath = path.join(__dirname, 'app', 'assets', 'images', 'icon.png')
 
 if (os.platform() === 'darwin') {
     app.dock.setIcon(iconPath)
