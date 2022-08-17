@@ -1,4 +1,4 @@
-const version = '1.3.0';
+const version = '1.3.0-beta';
 const fs = require('fs');
 const moment = require('moment');
 const {ipcRenderer} = require('electron');
