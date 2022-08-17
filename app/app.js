@@ -1,7 +1,21 @@
-const {shell, ipcMain, app, dialog} = require('electron');
-const fs = require('fs');
 const path = require('path');
 const os = require('os');
+
+global.globalLogPathBase = undefined;
+
+switch (os.platform()) {
+    case 'win32':
+        globalLogPathBase = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner', 'logs');
+        break;
+    case 'darwin':
+        globalLogPathBase = path.join(os.homedir(), '.reelsteady-joiner', 'logs');
+        break;
+}
+
+require('./src/provider/Unhandled')(globalLogPathBase);
+
+const {shell, ipcMain, app, dialog} = require('electron');
+const fs = require('fs');
 const pLimit = require('p-limit');
 
 const Config = require('./src/provider/Config');
@@ -16,22 +30,10 @@ const Project = require('./src/entity/Project');
 const ConfigSaveError = require('./src/exceptions/ConfigSaveError');
 
 global.locale = app.getLocale();
-global.globalLogPathBase = undefined;
-
-switch (os.platform()) {
-    case 'win32':
-        globalLogPathBase = path.join(os.homedir(), 'AppData', 'Local', 'ReelSteady Joiner', 'logs');
-        break;
-    case 'darwin':
-        globalLogPathBase = path.join(os.homedir(), '.reelsteady-joiner', 'logs');
-        break;
-}
 
 if (!fs.existsSync(globalLogPathBase)) {
     fs.mkdirSync(globalLogPathBase, {recursive: true});
 }
-
-require('./src/provider/Unhandled')(globalLogPathBase);
 
 
 ipcMain.on('errorInWindow', function (event, data) {
@@ -77,19 +79,18 @@ ipcMain.on('getProject', (event, args) => {
 });
 
 ipcMain.on('createProject', (event, args) => {
-    for (const projectToCheck of projects) {
-        if (projectToCheck.completed) {
-            projects.splice(projects.indexOf(projectToCheck), 1);
-            event.sender.send('removeCompletedProject', {'id': projectToCheck.id});
-        }
-    }
-
     // Complete projects failed
     for (const project of projects) {
         if (project.failed) {
             project.completed = true;
         }
     }
+
+    for (const projectToRemove of projects.filter(p => p.completed)) {
+        event.sender.send('removeCompletedProject', {'id': projectToRemove.id});
+    }
+
+    global.projects = projects.filter(p => !p.completed);
 
     const project = new Project(args.dirPath, args.files);
     projects.push(project);

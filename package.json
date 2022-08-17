@@ -4,16 +4,15 @@
   "description": "ReelSteady joiner merge multiple GoPro separate video files into one without losing gyro data",
   "main": "index.js",
   "scripts": {
-    "start": "electron .",
-    "pack": "electron-builder --dir",
-    "build": "electron-builder",
-    "build-all": "electron-builder -mw"
+    "start": "cross-env APP_DEV=true electron .",
+    "build": "electron-builder"
   },
   "author": "rubegartor",
   "license": "MIT",
   "devDependencies": {
-    "electron": "^19.0.8",
-    "electron-builder": "^23.1.0"
+    "cross-env": "^7.0.3",
+    "electron": "^20.0.2",
+    "electron-builder": "^23.3.3"
   },
   "dependencies": {
     "axios": "^0.27.2",

@@ -28,8 +28,10 @@ switch (os.platform()) {
         exifToolConfigPath = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'exiftool.config') : path.join(macExePath, 'app', 'bin', 'exiftool.config');
 
         //Give execution permissions to utilities
-        fs.chmodSync(gyroProcessPath, 0o755);
-        fs.chmodSync(exiftool, 0o755);
+        if (Commons.isDev()) {
+            fs.chmodSync(gyroProcessPath, 0o755);
+            fs.chmodSync(exiftool, 0o755);
+        }
         break;
     case 'win32':
         gyroProcessPath = path.join(exePath, 'app', 'bin', 'win', 'udtacopy.exe');

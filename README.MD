@@ -37,11 +37,9 @@ _Download and execute installer (**[Releases tab](https://github.com/rubegartor/
 _(Known issues and recommendations)_
 
 - If you are running ReelSteady Joiner on macOS you will need to give security permissions to udtacopy first time you use it.
-  Popup will appear, go System Preferences > Security & privacy and click button: Open anyway.
+  Popup will appear, **go System Preferences > Security & privacy and click button: Open anyway.**
 
 - Antiviruses could interfere with file manipulation, if you have troubles, try to disable it
-
-- MacOS ARM builds are having issues on certain devices, the issue has not yet been identified. [#26](https://github.com/rubegartor/ReelSteady-Joiner/issues/26)
 
 ### Update ReelSteady Joiner ⚙️
 
