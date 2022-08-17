@@ -46,7 +46,8 @@
       {
         "target": "pkg",
         "arch": [
-          "arm64"
+          "arm64",
+          "x64"
         ]
       }
     ],
