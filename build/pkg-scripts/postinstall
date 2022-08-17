@@ -1,0 +1,6 @@
+#!/bin/sh
+sudo xattr -r -d com.apple.quarantine /Applications/ReelSteady\ Joiner.app
+sudo chmod +x /Applications/ReelSteady\ Joiner.app/Contents/app/bin/mac/udtacopy
+sudo chmod +x /Applications/ReelSteady\ Joiner.app/Contents/app/bin/mac/exiftool/exiftool
+
+exit 0

@@ -44,9 +44,8 @@
     ],
     "target": [
       {
-        "target": "dmg",
+        "target": "pkg",
         "arch": [
-          "x64",
           "arm64"
         ]
       }
@@ -56,5 +55,10 @@
       "app/bin/mac/**",
       "app/bin/exiftool.config"
     ]
+  },
+  "pkg": {
+    "scripts": "pkg-scripts",
+    "allowAnywhere": false,
+    "allowCurrentUserHome": false
   }
 }
