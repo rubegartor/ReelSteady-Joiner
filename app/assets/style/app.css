@@ -655,6 +655,13 @@ img.openExternal:hover {
     right: 128%;
 }
 
+#version {
+    color: var(--medium-gray);
+    display: flex;
+    justify-content: right;
+    margin-top: 10px;
+}
+
 .blink {
     animation: blinker 3s linear infinite;
 }
