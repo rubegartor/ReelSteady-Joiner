@@ -266,6 +266,7 @@ ipcRenderer.on('removeCompletedProject', (event, args) => {
 })
 
 function updateView() {
+    ui.get('version').innerText = Commons.version;
     ui.get('settingsBtn').innerHTML = svg.getSettings();
     ui.get('settingsGoBackBtn').innerHTML = svg.getBack();
 }
