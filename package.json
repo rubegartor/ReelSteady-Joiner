@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "start": "cross-env APP_DEV=true electron .",
-    "build": "electron-builder"
+    "build-mac-arm64": "export npm_config_arch=arm64 && rm -rf ./node_modules/ && npm install && electron-builder build --mac --arm64",
+    "build-mac-x64": "export npm_config_arch=x64 && rm -rf ./node_modules/ && npm install && electron-builder --mac --x64",
+    "build-win": "rmdir /s /q node_modules && npm install && electron-builder build --win --x64"
   },
   "author": "rubegartor",
   "license": "MIT",
