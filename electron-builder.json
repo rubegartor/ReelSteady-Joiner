@@ -44,11 +44,7 @@
     ],
     "target": [
       {
-        "target": "pkg",
-        "arch": [
-          "arm64",
-          "x64"
-        ]
+        "target": "pkg"
       }
     ],
     "icon": "app/assets/images/icon.png",
