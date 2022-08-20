@@ -54,8 +54,10 @@
     ]
   },
   "pkg": {
+    "installLocation": "/Applications",
     "scripts": "pkg-scripts",
     "allowAnywhere": false,
-    "allowCurrentUserHome": false
+    "allowCurrentUserHome": false,
+    "isRelocatable": false
   }
 }
