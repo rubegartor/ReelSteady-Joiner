@@ -129,7 +129,7 @@ class VideoProcessor {
      * @param project
      */
     static createLog(project) {
-        const logName = `${project.name}_${Commons.dateToStr(new Date())}'.log'`.replace(':', '-');
+        const logName = `${project.name}_${Commons.dateToStr(new Date())}.log`.replace(':', '-');
         const logPathBase = globalLogPathBase;
         log.transports.file.resolvePath = () => path.join(logPathBase, logName);
     }
