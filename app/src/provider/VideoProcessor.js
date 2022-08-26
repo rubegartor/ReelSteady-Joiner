@@ -98,7 +98,7 @@ class VideoProcessor {
                     projectError = true;
                     reject(e);
                 }).then(() => {
-                    if (!projectError) return this.setCustomMetadata(project.filePaths[0], outputFilePath);
+                    if (!projectError) return this.setCustomMetadata(project, outputFilePath);
                 }).catch((e) => {
                     projectError = true;
                     reject(e);
