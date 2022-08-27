@@ -48,12 +48,12 @@ class VideoProcessor {
      * @param event
      */
     static async startProcessing(project, event) {
-        event.sender.send('setMaxProjectProgress', {'id': project.id, 'max': project.duration});
         this.createLog(project);
         return new Promise((resolve, reject) => {
             const waitFor = (cd, cb) => { cd() ? cb() : setTimeout(waitFor.bind(null, cd, cb), 250) };
 
             waitFor(() => { return project.available }, () => {
+                event.sender.send('setMaxProjectProgress', {'id': project.id, 'max': project.duration});
                 let projectError = false;
 
                 this.logGeneralInfo();
