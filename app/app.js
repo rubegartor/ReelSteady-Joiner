@@ -58,6 +58,24 @@ ipcMain.on('getConfig', (event) => {
     event.returnValue = config;
 });
 
+ipcMain.on('updateConfig', (event, args) => {
+    try {
+        config[args.key] = args.value;
+        config.saveConfig();
+    } catch (e) {
+        if (e instanceof ConfigSaveError) {
+            event.sender.send('spawnNotification', {
+                'message': e.toString(),
+                'type': 'danger',
+                'width': 350,
+                'timeout': 5000
+            });
+        } else {
+            throw e;
+        }
+    }
+});
+
 ipcMain.on('getLocale', (event) => {
     event.returnValue = locale;
 });
@@ -172,7 +190,7 @@ ipcMain.on('updateProjectName', (event, args) => {
 });
 
 ipcMain.on('processVideos', (event) => {
-    const limit = pLimit(1);
+    const limit = pLimit(config.concurrentProjects);
 
     const input = projects
         .filter(p => !p.failed)

@@ -15,6 +15,8 @@ class Config {
     constructor() {
         // noinspection JSUnusedGlobalSymbols
         this.savePath = '';
+        this.exportOption = 0;
+        this.concurrentProjects = 1;
     }
 
     loadConfig() {
@@ -34,15 +36,13 @@ class Config {
             }
         }
 
-        fs.readFile(path.join(CONFIG_DIR, CONFIG_FILE), 'utf8', (err, data) => {
-            const jsonData = JSON.parse(data);
+        const jsonData = JSON.parse(fs.readFileSync(path.join(CONFIG_DIR, CONFIG_FILE), 'utf8'));
 
-            for (const key in jsonData) {
-                if (jsonData.hasOwnProperty(key) && typeof this[key] !== 'undefined') {
-                    this[key] = jsonData[key];
-                }
+        for (const key in jsonData) {
+            if (jsonData.hasOwnProperty(key) && typeof this[key] !== 'undefined') {
+                this[key] = jsonData[key];
             }
-        });
+        }
     }
 
     saveConfig() {

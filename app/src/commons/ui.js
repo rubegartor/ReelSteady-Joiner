@@ -25,6 +25,10 @@ module.exports = {
         }
     },
 
+    onChange(elem, listener) {
+        elem.addEventListener('change', listener);
+    },
+
     hide(elems) {
         if (!Array.isArray(elems)) {
             elems = [elems];

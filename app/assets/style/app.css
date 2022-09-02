@@ -130,6 +130,24 @@ button:disabled {
     background-color: var(--gray);
 }
 
+.btn-number-input-l {
+    background: var(--orange);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+}
+
+.btn-number-input-r {
+    background: var(--orange);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+}
+
 .buttonContainer {
     display: inline-flex;
     margin-top: 15px;
@@ -143,6 +161,10 @@ h1 {
 
 .d-flex {
     display: flex;
+}
+
+.vertical-center {
+    align-items: center;
 }
 
 .subtitle {
@@ -162,7 +184,7 @@ h1 {
 
 #projectSavePathOption {
     font-size: .8em;
-    width: 350px;
+    width: 100%;
 }
 
 a {
@@ -376,6 +398,14 @@ input[type="text"] {
     color: rgba(255, 255, 255, 0.6);
 }
 
+.input-number {
+    width: 40px;
+    margin-left: 8px;
+    margin-right: 8px;
+    cursor: default;
+    text-align: center;
+}
+
 #settingsWrapper {
     background-color: var(--bg);
     width: 100%;
@@ -416,15 +446,19 @@ input[type="text"] {
 
 #settingsWrapper .configLine {
     width: 100%;
-    display: inline-flex;
-    justify-content: space-between;
-    align-items: center;
     height: auto;
     min-height: 50px;
     padding: 8px 20px 8px 20px;
     background-color: var(--dark-gray);
     border-radius: 5px;
     box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
+}
+
+#settingsWrapper .configLineContent {
+    width: 100%;
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 #settingsWrapper .configLine + .configLine {
@@ -649,10 +683,27 @@ img.openExternal:hover {
     opacity: 1;
 }
 
-.tooltip-left {
-    top: -5px;
-    bottom: auto;
-    right: 128%;
+select {
+    background: rgba(99, 110, 114, 0.3);
+    background-image: url("data:image/svg+xml,%3Csvg width='24px' height='24px' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill='%23ebe5d6' d='M22.987 10.25l-9 7.99c-.57.51-1.28.76-1.99.76s-1.42-.25-1.98-.74c0-.01-.01-.01-.01-.01l-.02-.02-8.98-7.98c-1.24-1.1-1.35-3.002-.25-4.242 1.1-1.24 3-1.35 4.23-.25l7.01 6.23 7.01-6.23c1.24-1.1 3.13-.99 4.24.25 1.1 1.24.98 3.13-.26 4.24z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat, repeat;
+    background-position: right .7em top 50%, 0 0;
+    color: var(--light-gray);
+    height: 35px;
+    border: 0;
+    border-radius: 5px;
+    font-size: 0.95rem;
+    outline: 0;
+    box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
+    padding: 0 30px 0 12px;
+    -webkit-appearance: none;
+    appearance: none;
+    background-size: .65em auto, 100%;
+}
+
+option {
+    background-color: var(--dark-gray);
+    color: var(--light-gray);
 }
 
 #version {
