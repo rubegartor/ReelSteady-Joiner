@@ -1,4 +1,4 @@
-const version = '1.3.0-beta';
+const version = '1.3.0';
 const fs = require('fs');
 const moment = require('moment');
 const {ipcRenderer} = require('electron');
@@ -24,7 +24,7 @@ module.exports = {
 
         try {
             dirContent = fs.readdirSync(dir);
-        } catch (e) {
+        } catch (_) {
             //Errors omitted like EPERM, EBUSY, etc.
         }
 

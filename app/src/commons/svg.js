@@ -3,8 +3,9 @@ module.exports = {
         return '<svg viewBox="-32 0 512 512" xmlns="http://www.w3.org/2000/svg"><path fill="#e74c3c" d="M432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16zM53.2 467a48 48 0 0 0 47.9 45h245.8a48 48 0 0 0 47.9-45L416 128H32z"/></svg>';
     },
 
-    getPencil() {
-        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"> <g> <g> <path fill="#706fd3" d="M387.182,0L0,387.181V512h124.818L512,124.819L387.182,0z M104.879,463.858H48.142v-56.735l282.303-282.303l56.735,56.735 L104.879,463.858z M364.486,90.78l22.694-22.694l56.737,56.734l-22.696,22.696L364.486,90.78z"/> </g></g></svg>'
+    getPencil(disabled = false) {
+        const bgColor = disabled ? '#696969' : '#706fd3';
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="enable-background:new 0 0 512 512;" xml:space="preserve"> <g> <g> <path fill="${bgColor}" d="M387.182,0L0,387.181V512h124.818L512,124.819L387.182,0z M104.879,463.858H48.142v-56.735l282.303-282.303l56.735,56.735 L104.879,463.858z M364.486,90.78l22.694-22.694l56.737,56.734l-22.696,22.696L364.486,90.78z"/></g></g></svg>`
     },
 
     getSettings() {

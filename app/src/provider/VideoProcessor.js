@@ -57,15 +57,16 @@ class VideoProcessor {
                 let projectError = false;
 
                 this.logGeneralInfo();
+                this.generateProjectDir(project);
                 const outputName = this.generateOutputName(project);
-                const projectPath = this.createProjectDir(project);
                 const concatFilePath = this.createConcatFile(project);
-                const outputFilePath = path.join(projectPath, outputName);
-                this.logProjectInfo(project, outputName, projectPath, concatFilePath, outputFilePath);
+                const outputFilePath = path.join(project.projectPath, outputName);
+                this.logProjectInfo(project, outputName, concatFilePath, outputFilePath);
 
-                this.getAllStreamMaps(projectPath).then(streamMaps => {
+                this.getAllStreamMaps(project.projectPath, concatFilePath).then(streamMaps => {
                     return streamMaps.map((m) => { return `-map 0:${m}` });
                 }).catch((e) => {
+                    projectError = true;
                     reject(e);
                 }).then(maps => {
                     const inputOptions = ['-y', '-f concat', '-safe 0'];
@@ -93,7 +94,7 @@ class VideoProcessor {
                         reject(err);
                     });
                 }).then(() => {
-                    if (!projectError) return this.processGyro(outputName, projectPath, project.filePaths[0]);
+                    if (!projectError) return this.processGyro(outputName, project);
                 }).catch((e) => {
                     projectError = true;
                     reject(e);
@@ -107,7 +108,7 @@ class VideoProcessor {
                         // Rename output file if project type is 360
                         if (project.type === ProjectType.PROJECT_360) {
                             const outputNameBase = path.basename(outputName, path.extname(outputName))
-                            fs.renameSync(outputFilePath, path.join(projectPath, outputNameBase + '.' + ProjectType.PROJECT_360));
+                            fs.renameSync(outputFilePath, path.join(project.projectPath, outputNameBase + '.' + ProjectType.PROJECT_360));
                         }
 
                         Commons.unlinkIfExists(concatFilePath);
@@ -154,10 +155,10 @@ class VideoProcessor {
     /**
      * Function that logs general info about project
      */
-    static logProjectInfo(project, outputName, projectPath, concatFilePath, outputFilePath) {
+    static logProjectInfo(project, outputName, concatFilePath, outputFilePath) {
         log.info(`Project: ${JSON.stringify(project, null, 2)}`);
         log.info(`outputName: ${outputName}`);
-        log.info(`projectPath: ${projectPath}`);
+        log.info(`projectPath: ${project.projectPath}`);
         log.info(`concatFilePath: ${concatFilePath}`);
         log.info(`outputFilePath: ${outputFilePath}`);
         log.info('File sizes:');
@@ -167,17 +168,24 @@ class VideoProcessor {
     }
 
     /**
-     * Function to create project path
+     * Function to generate project path
      *
      * @param project
-     * @returns {string} created project path
      */
-    static createProjectDir(project) {
-        if (!fs.existsSync(path.join(config.savePath, project.name))) {
-            fs.mkdirSync(path.join(config.savePath, project.name));
-        }
+    static generateProjectDir(project) {
+        switch (config.exportOption) {
+            case 0:
+                const savePath = path.join(config.savePath, project.name);
+                if (!fs.existsSync(savePath)) {
+                    fs.mkdirSync(savePath);
+                }
 
-        return path.join(config.savePath, project.name);
+                project.projectPath = savePath;
+                break;
+            case 1:
+                project.projectPath = project.dirPath;
+                break;
+        }
     }
 
     /**
@@ -187,15 +195,21 @@ class VideoProcessor {
      * @returns {string} generated output name
      */
     static generateOutputName(project) {
-        let outputName = path.parse(project.files[0]).name + '_joined.mp4';
-        if (fs.existsSync(path.join(config.savePath, project.name, outputName))) {
-            const dirFiles = Commons.readDir(path.join(config.savePath, project.name));
+        let projectFileName = path.parse(project.files[0]).name;
+        if (config.exportOption === 0) projectFileName = project.name;
+
+        let outputName = projectFileName + '_joined.mp4';
+        if (fs.existsSync(path.join(project.projectPath, outputName))) {
+            const dirFiles = Commons.readDir(path.join(project.projectPath));
             const fileRegex = /^G[HXS]\d{6}_joined(_\d*)?\.(MP4|mp4|360)/;
             let maxNumber = 1;
 
             for (const file of dirFiles) {
-                if (fileRegex.test(file)) {
-                    const split = path.parse(file).name.split('_');
+                const fileName = path.parse(file).name;
+                const checkFileName = fileName.substring(0, 8) === projectFileName.substring(0, 8);
+
+                if (checkFileName && fileRegex.test(file)) {
+                    const split = fileName.split('_');
 
                     if (split.length > 2 && !isNaN(parseInt(split[2])) && typeof parseInt(split[2]) === 'number') {
                         if (parseInt(split[2]) > maxNumber - 1) {
@@ -205,7 +219,7 @@ class VideoProcessor {
                 }
             }
 
-            outputName = `${path.parse(project.files[0]).name}_joined_${maxNumber}.mp4`;
+            outputName = `${projectFileName}_joined_${maxNumber}.mp4`;
         }
 
         return outputName;
@@ -225,23 +239,22 @@ class VideoProcessor {
 
         log.debug(`concat.txt content:\n${concatText}`);
 
-        fs.writeFileSync(path.join(config.savePath, project.name, 'concat.txt'), concatText, 'utf-8');
+        fs.writeFileSync(path.join(os.tmpdir(), `concat_${project.id}.txt`), concatText, 'utf-8');
 
-        return path.join(config.savePath, project.name, 'concat.txt');
+        return path.join(os.tmpdir(), `concat_${project.id}.txt`);
     }
 
     /**
      * Function to embed the gyroscope data
      *
      * @param outputName
-     * @param projectPath
-     * @param firstVideo
+     * @param project
      */
-    static processGyro(outputName, projectPath, firstVideo) {
+    static processGyro(outputName, project) {
         return new Promise((resolve, reject) => {
-            const args = [firstVideo, outputName];
+            const args = [project.filePaths[0], path.join(project.projectPath, outputName)];
             // noinspection JSCheckFunctionSignatures
-            const proc = spawn(gyroProcessPath, args, {cwd: projectPath});
+            const proc = spawn(gyroProcessPath, args);
 
             log.debug(`procesGryro: ${JSON.stringify(proc)}`);
 
@@ -290,24 +303,27 @@ class VideoProcessor {
             ], resolve);
 
             log.debug(`customMetadata: ${JSON.stringify(exec)}`);
-        })
+        });
     }
 
     /**
      * Function that gets all stream maps available in the project video files
      *
      * @param cwdPath
+     * @param concatFilePath
      * @returns {Promise<[string]>}
      */
-    static async getAllStreamMaps(cwdPath) {
+    static async getAllStreamMaps(cwdPath, concatFilePath) {
         return new Promise((resolve, reject) => {
-            const cmd = `"${ffmpegPath}" -f concat -safe 0 -i concat.txt -y`;
+            const cmd = `"${ffmpegPath}" -f concat -safe 0 -i ${concatFilePath} -y`;
             exec(cmd, {cwd: cwdPath}, function (error, stdout, stderr) {
                 try {
                     const searchStr = 'Stream #0:';
                     // noinspection JSUnresolvedFunction
                     const streamMaps = [...stderr.matchAll(new RegExp(searchStr, 'gi'))]
                         .map(a => a.input.substring(a.index + searchStr.length, (a.index + searchStr.length) + 1));
+
+                    if (streamMaps.length === 0) reject({'error': 'No stream maps found'});
 
                     log.debug(`Extracted maps: ${streamMaps.join(', ')}`);
 

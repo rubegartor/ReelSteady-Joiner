@@ -30,7 +30,12 @@ const chapterGroupContinueBtn = ui.get('chapterGroupContinueBtn');
 const projectSavePathOption = ui.get('projectSavePathOption');
 const openLogsPathBtn = ui.get('openLogsPathBtn');
 const projectSavePathBtn = ui.get('projectSavePathBtn');
+const projectSavePathContainer = ui.get('projectSavePathOptionContainer');
+const projectExportOptions = ui.get('projectExportOptions');
 const projectContainer = ui.get('projectContainer');
+const concurrentDownBtn = ui.get('concurrentDownBtn');
+const concurrentUpBtn = ui.get('concurrentUpBtn');
+const concurrentProjectsOption = ui.get('concurrentProjectsOption');
 
 updateView();
 updateConfigDOM();
@@ -62,6 +67,27 @@ ui.onClick(ui.getWithClass('close-modal'), () => {
 
 ui.onClick(openLogsPathBtn, () => {
     ipcRenderer.send('openLogsPath');
+});
+
+ui.onChange(projectExportOptions, () => {
+    const select = ui.get('projectExportOptions');
+    for (const option of ui.getWithSelector(`option`, select)) {
+        option.removeAttribute('selected');
+    }
+
+    const selectValue = parseInt(select.options[select.selectedIndex].value);
+    select.options[select.selectedIndex].setAttribute('selected', 'selected');
+
+    switch (selectValue) {
+        case 0: //Select project save path
+            ui.show(projectSavePathContainer);
+            break;
+        case 1: //Auto export to source path
+            ui.hide(projectSavePathContainer);
+            break;
+    }
+
+    ipcRenderer.send('updateConfig', {'key': 'exportOption', 'value': selectValue});
 });
 
 ui.onClick(projectSavePathBtn, () => {
@@ -102,6 +128,22 @@ ui.onClick(chapterGroupContinueBtn, () => {
 
 ui.onClick(processVideosBtn, () => {
     ipcRenderer.send('processVideos');
+});
+
+ui.onClick(concurrentUpBtn, () => {
+    if (concurrentProjectsOption.value < 5) {
+        concurrentProjectsOption.value = parseInt(concurrentProjectsOption.value) + 1;
+    }
+
+    ipcRenderer.send('updateConfig', {'key': 'concurrentProjects', 'value': parseInt(concurrentProjectsOption.value)});
+});
+
+ui.onClick(concurrentDownBtn, () => {
+    if (concurrentProjectsOption.value > 1) {
+        concurrentProjectsOption.value = parseInt(concurrentProjectsOption.value) - 1;
+    }
+
+    ipcRenderer.send('updateConfig', {'key': 'concurrentProjects', 'value': parseInt(concurrentProjectsOption.value)});
 });
 
 /**
@@ -187,12 +229,18 @@ ipcRenderer.on('createProjectReturn', (event, args) => {
 ipcRenderer.on('processVideosFinished', () => {
     ui.enable(selectFileBtn);
     ui.enable(projectSavePathBtn);
+    ui.enable(concurrentUpBtn);
+    ui.enable(concurrentDownBtn);
+    ui.enable(projectExportOptions);
 });
 
 ipcRenderer.on('processVideosStarted', () => {
     ui.disable(selectFileBtn);
+    ui.disable(projectExportOptions);
     ui.disable(processVideosBtn);
     ui.disable(projectSavePathBtn);
+    ui.disable(concurrentUpBtn);
+    ui.disable(concurrentDownBtn);
 });
 
 ipcRenderer.on('processVideosStarting', () => {
@@ -277,6 +325,15 @@ function updateView() {
 function updateConfigDOM() {
     const config = ipcRenderer.sendSync('getConfig');
     projectSavePathOption.value = config.savePath;
+
+    concurrentProjectsOption.value = config.concurrentProjects;
+
+    ui.getWithSelector(`option[value="${config.exportOption}"]`, projectExportOptions)[0].setAttribute('selected', 'selected');
+    switch (config.exportOption) {
+        case 0:
+            ui.show(projectSavePathContainer);
+            break;
+    }
 }
 
 /**
@@ -305,6 +362,5 @@ function checkForUpdates() {
             const alert = new AlertRender('Unable to check for available updates', AlertRender.ALERT_DANGER, 5000);
             alert.width = '310px';
             AlertRender.appendToContainer(alert.toHTML());
-        })
-    ;
+        });
 }

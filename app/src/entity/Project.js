@@ -7,6 +7,7 @@ class Project {
     constructor(dirPath, files) {
         this._id = uuidv4();
         this._type = undefined;
+        this._projectPath = undefined;
         this._dirPath = dirPath;
         this._files = files.sort();
         this._name = path.parse(this._files[0]).name;
@@ -34,6 +35,14 @@ class Project {
 
     get filePaths() {
         return this._files.map((f) => { return path.join(this._dirPath, f) });
+    }
+
+    get projectPath() {
+        return this._projectPath;
+    }
+
+    set projectPath(value) {
+        this._projectPath = value;
     }
 
     get dirPath()  {
@@ -68,6 +77,7 @@ class Project {
         return this._duration;
     }
 
+    //Format:
     get modifiedDate() {
         return this._modifiedDate;
     }
