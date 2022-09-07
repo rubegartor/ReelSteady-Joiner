@@ -3,7 +3,7 @@
     --red: #e74c3c;
     --dark-red: #c0392b;
     --orange: #E67E22;
-    --yellow: #e4c237;
+    --yellow: #efb026;
     --green: #27AE60;
     --blue: #3787c7;
     --gray: #555555;
@@ -146,6 +146,11 @@ button:disabled {
     width: 24px;
     height: 24px;
     padding: 0;
+}
+
+.btn-number-input-winfix {
+    height: auto;
+    padding-bottom: 3px;
 }
 
 .buttonContainer {
@@ -621,6 +626,11 @@ input[type="text"] {
 
 .alert-info {
     background-color: var(--blue);
+    color: var(--white);
+}
+
+.alert-warning {
+    background-color: var(--yellow);
     color: var(--white);
 }
 

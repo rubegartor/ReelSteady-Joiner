@@ -47,6 +47,14 @@ if (os.platform() === 'win32') {
     });
 }
 
+ui.disableDrop(() => {
+    const alert = new AlertRender('Warning: Drag & drop files is not enabled', AlertRender.ALERT_WARNING, 5000);
+    alert.enableBtn();
+    alert.width = '350px';
+
+    AlertRender.appendToContainer(alert.toHTML());
+});
+
 ui.onClick(settingsBtn, () => {
     ui.show(settingsContainer);
 });
@@ -311,7 +319,7 @@ ipcRenderer.on('spawnNotification', (event, args) => {
 
 ipcRenderer.on('removeCompletedProject', (event, args) => {
     ui.getWithSelector(`[data-id="${args.id}"]`)[0].remove();
-})
+});
 
 function updateView() {
     ui.get('version').innerText = Commons.version;

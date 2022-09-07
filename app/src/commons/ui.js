@@ -29,6 +29,21 @@ module.exports = {
         elem.addEventListener('change', listener);
     },
 
+    disableDrop(cb) {
+        document.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+        });
+
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        document.addEventListener('drop', (e) => {
+            cb();
+            e.preventDefault();
+        });
+    },
+
     hide(elems) {
         if (!Array.isArray(elems)) {
             elems = [elems];

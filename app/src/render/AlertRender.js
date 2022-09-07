@@ -4,6 +4,7 @@ class AlertRender {
     static ALERT_SUCCESS = 'alert-success';
     static ALERT_DANGER = 'alert-danger';
     static ALERT_INFO = 'alert-info';
+    static ALERT_WARNING = 'alert-warning';
 
     constructor(body, type, timeout = 5000) {
         this._body = body;
@@ -11,6 +12,7 @@ class AlertRender {
         this._timeout = timeout;
         this._width = 0;
         this._elem = undefined;
+        this._closeBtn = false;
         this._onRemove = undefined;
     }
 
@@ -20,6 +22,10 @@ class AlertRender {
 
     set onRemove(callback) {
         this._onRemove = callback;
+    }
+
+    enableBtn() {
+        this._closeBtn = true;
     }
 
     /**
@@ -39,7 +45,9 @@ class AlertRender {
                 that._elem.classList.add('alert-hide');
                 this._removeAlert(that);
             }, this._timeout);
-        } else {
+        }
+
+        if (this._timeout === 0 || this._closeBtn) {
             const alertClose = ui.createElem('div');
             alertClose.innerHTML = '&times;';
             alertClose.classList.add('alert-close');
