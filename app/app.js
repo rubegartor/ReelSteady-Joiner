@@ -89,6 +89,7 @@ ipcMain.on('closeApp', () => {
 });
 
 ipcMain.on('getProjects', (event) => {
+    projects.map((p) => { p.log = undefined }); //Cannot share log object from project by IPC and already it's not necessary
     event.returnValue = projects;
 });
 

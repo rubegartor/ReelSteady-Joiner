@@ -10,6 +10,7 @@ class Project {
         this._projectPath = undefined;
         this._dirPath = dirPath;
         this._files = files.sort();
+        this._log = undefined;
         this._name = path.parse(this._files[0]).name;
         this._duration = 0; //Time in seconds
         this._modifiedDate = '';
@@ -31,6 +32,14 @@ class Project {
 
     get files() {
         return this._files;
+    }
+
+    get log() {
+        return this._log;
+    }
+
+    set log(value) {
+        this._log = value;
     }
 
     get filePaths() {
@@ -77,7 +86,6 @@ class Project {
         return this._duration;
     }
 
-    //Format:
     get modifiedDate() {
         return this._modifiedDate;
     }
