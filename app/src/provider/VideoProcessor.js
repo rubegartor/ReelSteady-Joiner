@@ -1,7 +1,7 @@
 const path = require('path');
 const os = require('os');
 const fs = require('fs');
-const log = require('electron-log');
+const electronLog = require('electron-log');
 const {app} = require('electron');
 const {spawn, execFile, exec} = require('child_process');
 const ffmpegPath = require('ffmpeg-static').replace('app.asar', 'app.asar.unpacked');
@@ -56,14 +56,14 @@ class VideoProcessor {
                 event.sender.send('setMaxProjectProgress', {'id': project.id, 'max': project.duration});
                 let projectError = false;
 
-                this.logGeneralInfo();
+                this.logGeneralInfo(project);
                 this.generateProjectDir(project);
                 const outputName = this.generateOutputName(project);
                 const concatFilePath = this.createConcatFile(project);
                 const outputFilePath = path.join(project.projectPath, outputName);
                 this.logProjectInfo(project, outputName, concatFilePath, outputFilePath);
 
-                this.getAllStreamMaps(project.projectPath, concatFilePath).then(streamMaps => {
+                this.getAllStreamMaps(project, concatFilePath).then(streamMaps => {
                     return streamMaps.map((m) => { return `-map 0:${m}` });
                 }).catch((e) => {
                     projectError = true;
@@ -83,8 +83,8 @@ class VideoProcessor {
                             .on('error', (err, stdout, stderr) => {
                                 reject({'err': err, 'stdout': stdout, 'stderr': stderr});
                             })
-                            .on('start', (cmd) => log.debug(cmd))
-                            .on('stderr', (stderr) => log.debug(stderr))
+                            .on('start', (cmd) => project.log.debug(cmd))
+                            .on('stderr', (stderr) => project.log.debug(stderr))
                             .on('end', resolve)
                             .inputOptions(inputOptions)
                             .outputOptions(outputOptions)
@@ -130,40 +130,43 @@ class VideoProcessor {
      * @param project
      */
     static createLog(project) {
+        const log = electronLog.create(project.id);
         const logName = `${project.name}_${Commons.dateToStr(new Date())}.log`.replace(':', '-');
         const logPathBase = globalLogPathBase;
         log.transports.file.resolvePath = () => path.join(logPathBase, logName);
+
+        project.log = log;
     }
 
     /**
      * Function that logs general info about RSJoiner paths, etc.
      */
-    static logGeneralInfo() {
+    static logGeneralInfo(project) {
         //Debug info
-        log.info(`OS: ${os.platform()} - ${os.release()}`);
-        log.info(`version: ${Commons.version}`);
-        log.info(`isDev?: ${Commons.isDev()}`);
-        log.info(`config: ${JSON.stringify(config, null, 2)}`);
-        log.info(`exePath: ${exePath}`);
-        log.info(`macExePath: ${macExePath}`);
-        log.info(`ffmpegPath: ${ffmpegPath}`);
-        log.info(`gyroProcessPath: ${gyroProcessPath}`);
-        log.info(`exiftool: ${exiftool}`);
-        log.info(`exiftool config: ${exifToolConfigPath}`);
+        project.log.info(`OS: ${os.platform()} - ${os.release()}`);
+        project.log.info(`version: ${Commons.version}`);
+        project.log.info(`isDev?: ${Commons.isDev()}`);
+        project.log.info(`config: ${JSON.stringify(config, null, 2)}`);
+        project.log.info(`exePath: ${exePath}`);
+        project.log.info(`macExePath: ${macExePath}`);
+        project.log.info(`ffmpegPath: ${ffmpegPath}`);
+        project.log.info(`gyroProcessPath: ${gyroProcessPath}`);
+        project.log.info(`exiftool: ${exiftool}`);
+        project.log.info(`exiftool config: ${exifToolConfigPath}`);
     }
 
     /**
      * Function that logs general info about project
      */
     static logProjectInfo(project, outputName, concatFilePath, outputFilePath) {
-        log.info(`Project: ${JSON.stringify(project, null, 2)}`);
-        log.info(`outputName: ${outputName}`);
-        log.info(`projectPath: ${project.projectPath}`);
-        log.info(`concatFilePath: ${concatFilePath}`);
-        log.info(`outputFilePath: ${outputFilePath}`);
-        log.info('File sizes:');
+        project.log.info(`Project: ${JSON.stringify(project, null, 2)}`);
+        project.log.info(`outputName: ${outputName}`);
+        project.log.info(`projectPath: ${project.projectPath}`);
+        project.log.info(`concatFilePath: ${concatFilePath}`);
+        project.log.info(`outputFilePath: ${outputFilePath}`);
+        project.log.info('File sizes:');
         for (const filePath of project.filePaths) {
-            log.info(`${filePath} size: ${Commons.getFileSize(filePath)}B${(project.filePaths.indexOf(filePath) === (project.filePaths.length - 1) ? '\n' : '')}`);
+            project.log.info(`${filePath} size: ${Commons.getFileSize(filePath)}B${(project.filePaths.indexOf(filePath) === (project.filePaths.length - 1) ? '\n' : '')}`);
         }
     }
 
@@ -237,7 +240,7 @@ class VideoProcessor {
             concatText += 'file \'' + Commons.scapePath(filePath) + '\'\n';
         }
 
-        log.debug(`concat.txt content:\n${concatText}`);
+        project.log.debug(`concat.txt content:\n${concatText}`);
 
         fs.writeFileSync(path.join(os.tmpdir(), `concat_${project.id}.txt`), concatText, 'utf-8');
 
@@ -256,16 +259,16 @@ class VideoProcessor {
             // noinspection JSCheckFunctionSignatures
             const proc = spawn(gyroProcessPath, args);
 
-            log.debug(`procesGryro: ${JSON.stringify(proc)}`);
+            project.log.debug(`procesGryro: ${JSON.stringify(proc)}`);
 
             proc.stderr.on('data', (data) => {
                 proc.kill();
-                log.error(`Udtacopy stderr data: ${data}`);
+                project.log.error(`Udtacopy stderr data: ${data}`);
                 reject(data);
             });
 
             proc.stdout.on('data', (data) => {
-                log.debug(`Udtacopy stdout data: ${data}`);
+                project.log.debug(`Udtacopy stdout data: ${data}`);
             });
 
             proc.on('close', resolve);
@@ -302,21 +305,21 @@ class VideoProcessor {
                 outputVideo
             ], resolve);
 
-            log.debug(`customMetadata: ${JSON.stringify(exec)}`);
+            project.log.debug(`customMetadata: ${JSON.stringify(exec)}`);
         });
     }
 
     /**
      * Function that gets all stream maps available in the project video files
      *
-     * @param cwdPath
+     * @param project
      * @param concatFilePath
      * @returns {Promise<[string]>}
      */
-    static async getAllStreamMaps(cwdPath, concatFilePath) {
+    static async getAllStreamMaps(project, concatFilePath) {
         return new Promise((resolve, reject) => {
             const cmd = `"${ffmpegPath}" -f concat -safe 0 -i ${concatFilePath} -y`;
-            exec(cmd, {cwd: cwdPath}, function (error, stdout, stderr) {
+            exec(cmd, {cwd: project.projectPath}, function (error, stdout, stderr) {
                 try {
                     const searchStr = 'Stream #0:';
                     // noinspection JSUnresolvedFunction
@@ -325,7 +328,7 @@ class VideoProcessor {
 
                     if (streamMaps.length === 0) reject({'error': 'No stream maps found'});
 
-                    log.debug(`Extracted maps: ${streamMaps.join(', ')}`);
+                    project.log.debug(`Extracted maps: ${streamMaps.join(', ')}`);
 
                     resolve(streamMaps);
                 } catch (e) {
