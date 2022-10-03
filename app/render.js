@@ -48,7 +48,7 @@ if (os.platform() === 'win32') {
 }
 
 ui.disableDrop(() => {
-    const alert = new AlertRender('Warning: Drag & drop files is not enabled', AlertRender.ALERT_WARNING, 5000);
+    const alert = new AlertRender('Warning: Drag & drop files is not allowed', AlertRender.ALERT_WARNING, 5000);
     alert.enableBtn();
     alert.width = '350px';
 

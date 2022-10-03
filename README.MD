@@ -14,22 +14,29 @@ Supported on **Windows** & **MacOS** with GoPro Hero 6, 7, 8, 9, 10 and MAX
 
 _Download and execute installer (**[Releases tab](https://github.com/rubegartor/ReelSteady-Joiner/releases)**) or build source code and execute it_
 
+**IMPORTANT!!** It's absolutely necessary that the video files keep their original names, otherwise ReelSteady Joiner will not be able to find them.
+
 1. Choose your settings
+   1. Projects queue option higher than 1 is not recommended when using HDD instead of SSD
+   2. Project save path options:
+      1. **Select project save path**: Specify the path where the output video will be stored
+      2. **Export to source path**: The output video will automatically be stored at the same location of the origin video
 
-![Settings](https://i.imgur.com/A3vTKBF.png)
+![Settings](https://i.imgur.com/ChiR3RN.png)
 
-2. Select all of your mp4/360 files to concatenate (Normally 4GB chunks or less) and start merge process
+2. Select the folder containing mp4/360 files to concatenate (Normally 4GB chunks or less) (ReelSteady Joiner will take care of finding the files) and start merge process
 
-![Select files](https://i.imgur.com/na3SE7l.png)
+![Select files](https://i.imgur.com/d5LSXdp.png)
 ![Select files](https://i.imgur.com/zMIcsCo.png)
 
 3. Customize your projects
 
-![Customize](https://i.imgur.com/wdao3Gz.png)
+![Customize](https://i.imgur.com/DnfD9oz.png)
 
 4. Let ReelSteady Joiner work and combine all the videos
 
-![Processing videos](https://i.imgur.com/Gjawlv7.png)
+![Processing videos](https://i.imgur.com/dKj0AzU.png)
+![Processing videos](https://i.imgur.com/rwX66Ng.png)
 
 ---
 
