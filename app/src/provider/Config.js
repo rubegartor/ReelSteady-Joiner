@@ -46,9 +46,11 @@ class Config {
     }
 
     saveConfig() {
-        fs.writeFile(path.join(CONFIG_DIR, CONFIG_FILE), JSON.stringify(this), (err) => {
-            if (err) throw new ConfigSaveError('Unable to save settings');
-        });
+        try {
+            fs.writeFileSync(path.join(CONFIG_DIR, CONFIG_FILE), JSON.stringify(this));
+        } catch (_) {
+            throw new ConfigSaveError('Unable to save settings');
+        }
     }
 }
 
