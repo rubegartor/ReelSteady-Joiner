@@ -70,7 +70,11 @@ class VideoProcessor {
                     reject(e);
                 }).then(maps => {
                     const inputOptions = ['-y', '-f concat', '-safe 0'];
-                    let outputOptions = [ '-c copy', '-c:a aac', ...maps, '-ignore_unknown'];
+                    let outputOptions = ['-c copy', ...maps, '-ignore_unknown'];
+
+                    if (project.type === ProjectType.PROJECT_360) {
+                        outputOptions.push('-c:a aac');
+                    }
 
                     return new Promise((resolve, reject) => {
                         // noinspection JSUnresolvedFunction
@@ -332,7 +336,7 @@ class VideoProcessor {
 
                     resolve(streamMaps);
                 } catch (e) {
-                    reject({'error': error, 'stderr': stderr});
+                    reject(e);
                 }
             });
         });
