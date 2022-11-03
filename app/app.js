@@ -89,12 +89,17 @@ ipcMain.on('closeApp', () => {
 });
 
 ipcMain.on('getProjects', (event) => {
-    projects.map((p) => { p.log = undefined }); //Cannot share log object from project by IPC and already it's not necessary
-    event.returnValue = projects;
+    let clonedProjects = Commons.deepClone(projects);
+    clonedProjects.map((p) => { p.log = undefined });
+
+    event.returnValue = clonedProjects;
 });
 
 ipcMain.on('getProject', (event, args) => {
-    event.returnValue = projects.find(x => x.id === args.id);
+    let clonedProjects = Commons.deepClone(projects);
+    clonedProjects.map((p) => { p.log = undefined });
+
+    event.returnValue = clonedProjects.find(x => x.id === args.id);
 });
 
 ipcMain.on('createProject', (event, args) => {

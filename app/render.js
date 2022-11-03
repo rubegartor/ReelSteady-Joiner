@@ -182,8 +182,24 @@ function getChapterGroupsToProcess() {
         }
     }
 
-    ui.enable(processVideosBtn);
+    ui.disable(processVideosBtn);
     ui.hide(autoScanWrapper);
+
+    const waitFor = (cd, cb) => { cd() ? cb() : setTimeout(waitFor.bind(null, cd, cb), 50) };
+    waitFor(() => {
+        const projects = ipcRenderer.sendSync('getProjects');
+        let projectsAvailable = [];
+
+        for (const project of projects) {
+            projectsAvailable.push(project._available);
+        }
+
+        //Check if all projects are available
+        return projectsAvailable.every(p => p);
+    }, () => {
+
+        ui.enable(processVideosBtn);
+    });
 }
 
 ipcRenderer.on('showSelectFilesDialogReturn', (event, args) => {

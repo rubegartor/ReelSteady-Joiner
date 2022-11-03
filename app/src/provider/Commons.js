@@ -1,4 +1,4 @@
-const version = '1.3.0';
+const version = '1.3.1';
 const fs = require('fs');
 const moment = require('moment');
 const {ipcRenderer} = require('electron');
@@ -72,6 +72,17 @@ module.exports = {
      */
     scapePath(path) {
         return path.replace(/'/g, "'\\''");
+    },
+
+    /**
+     * Function that badly deep-clone arrays (Main and render process)
+     * (This piece of shit doesn't save functions or other special types)
+     *
+     * @param array
+     * @returns array
+     */
+    deepClone(array) {
+        return JSON.parse(JSON.stringify(array))
     },
 
     version
