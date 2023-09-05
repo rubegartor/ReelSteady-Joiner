@@ -17,6 +17,7 @@ class Config {
         this.savePath = '';
         this.exportOption = 0;
         this.concurrentProjects = 1;
+        this.fileModifyDates = 1;
     }
 
     loadConfig() {

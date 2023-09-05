@@ -32,6 +32,7 @@ const openLogsPathBtn = ui.get('openLogsPathBtn');
 const projectSavePathBtn = ui.get('projectSavePathBtn');
 const projectSavePathContainer = ui.get('projectSavePathOptionContainer');
 const projectExportOptions = ui.get('projectExportOptions');
+const fileModifyDatesOption  = ui.get('fileModifyDatesOption');
 const projectContainer = ui.get('projectContainer');
 const concurrentDownBtn = ui.get('concurrentDownBtn');
 const concurrentUpBtn = ui.get('concurrentUpBtn');
@@ -100,6 +101,10 @@ ui.onChange(projectExportOptions, () => {
 
 ui.onClick(projectSavePathBtn, () => {
     ipcRenderer.send('showLogsPathDialog');
+});
+
+ui.onClick(fileModifyDatesOption, function(e) {
+    ipcRenderer.send('updateConfig', {'key': 'fileModifyDates', 'value': e.target.checked});
 });
 
 ui.onClick(document, (event) => {
@@ -256,11 +261,13 @@ ipcRenderer.on('processVideosFinished', () => {
     ui.enable(concurrentUpBtn);
     ui.enable(concurrentDownBtn);
     ui.enable(projectExportOptions);
+    ui.enable(fileModifyDatesOption);
 });
 
 ipcRenderer.on('processVideosStarted', () => {
     ui.disable(selectFileBtn);
     ui.disable(projectExportOptions);
+    ui.disable(fileModifyDatesOption);
     ui.disable(processVideosBtn);
     ui.disable(projectSavePathBtn);
     ui.disable(concurrentUpBtn);
@@ -358,6 +365,8 @@ function updateConfigDOM() {
             ui.show(projectSavePathContainer);
             break;
     }
+
+    fileModifyDatesOption.checked = config.fileModifyDates;
 }
 
 /**
