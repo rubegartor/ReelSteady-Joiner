@@ -50,9 +50,13 @@ class VideoProcessor {
     static async startProcessing(project, event) {
         this.createLog(project);
         return new Promise((resolve, reject) => {
-            const waitFor = (cd, cb) => { cd() ? cb() : setTimeout(waitFor.bind(null, cd, cb), 250) };
+            const waitFor = (cd, cb) => {
+                cd() ? cb() : setTimeout(waitFor.bind(null, cd, cb), 250)
+            };
 
-            waitFor(() => { return project.available }, () => {
+            waitFor(() => {
+                return project.available
+            }, () => {
                 event.sender.send('setMaxProjectProgress', {'id': project.id, 'max': project.duration});
                 let projectError = false;
 
@@ -64,7 +68,9 @@ class VideoProcessor {
                 this.logProjectInfo(project, outputName, concatFilePath, outputFilePath);
 
                 this.getAllStreamMaps(project, concatFilePath).then(streamMaps => {
-                    return streamMaps.map((m) => { return `-map 0:${m}` });
+                    return streamMaps.map((m) => {
+                        return `-map 0:${m}`
+                    });
                 }).catch((e) => {
                     projectError = true;
                     reject(e);
@@ -81,8 +87,12 @@ class VideoProcessor {
                         new ffmpeg(concatFilePath)
                             .on('progress', (progress) => {
                                 try {
-                                    event.sender.send('updateProjectProgress', {'id': project.id, 'progress': progress});
-                                } catch (_) {} //Skip error when killing ffmpeg process on application close
+                                    event.sender.send('updateProjectProgress', {
+                                        'id': project.id,
+                                        'progress': progress
+                                    });
+                                } catch (_) {
+                                } //Skip error when killing ffmpeg process on application close
                             })
                             .on('error', (err, stdout, stderr) => {
                                 reject({'err': err, 'stdout': stdout, 'stderr': stderr});
@@ -302,14 +312,18 @@ class VideoProcessor {
      */
     static async setCustomMetadata(project, outputVideo) {
         return new Promise(resolve => {
-            const exec = execFile(exiftool, [
-                '-config',
-                exifToolConfigPath,
-                `-FileModifyDate="${project.modifiedDate}"`,
-                outputVideo
-            ], resolve);
+            if (config.fileModifyDates) {
+                const exec = execFile(exiftool, [
+                    '-config',
+                    exifToolConfigPath,
+                    `-FileModifyDate="${project.modifiedDate}"`,
+                    outputVideo
+                ], resolve);
 
-            project.log.debug(`customMetadata: ${JSON.stringify(exec)}`);
+                project.log.debug(`customMetadata: ${JSON.stringify(exec)}`);
+            } else {
+                resolve();
+            }
         });
     }
 
@@ -446,11 +460,11 @@ class VideoProcessor {
                 .on('end', () => {
                     resolve(path.join(os.tmpdir(), `${uuid}.png`));
                 })
-                .on('error', function(err, stdout, stderr) {
+                .on('error', function (err, stdout, stderr) {
                     reject({'error': err, 'stdout': stdout, 'stderr': stderr});
                 })
                 .takeScreenshots({
-                    timemarks: [ '00:00:00.000' ],
+                    timemarks: ['00:00:00.000'],
                     filename: `${uuid}.png`,
                     folder: os.tmpdir(),
                     size: '320x240'
