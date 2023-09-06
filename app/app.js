@@ -90,16 +90,16 @@ ipcMain.on('closeApp', () => {
 
 ipcMain.on('getProjects', (event) => {
     let clonedProjects = Commons.deepClone(projects);
-    clonedProjects.map((p) => { p.log = undefined });
+    clonedProjects.map((p) => { p._log = undefined });
 
     event.returnValue = clonedProjects;
 });
 
 ipcMain.on('getProject', (event, args) => {
     let clonedProjects = Commons.deepClone(projects);
-    clonedProjects.map((p) => { p.log = undefined });
+    clonedProjects.map((p) => { p._log = undefined });
 
-    event.returnValue = clonedProjects.find(x => x.id === args.id);
+    event.returnValue = clonedProjects.find(x => x._id === args.id);
 });
 
 ipcMain.on('createProject', (event, args) => {
