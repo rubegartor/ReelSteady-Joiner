@@ -216,7 +216,9 @@ class VideoProcessor {
         if (config.exportOption === 0) projectFileName = project.name;
 
         let outputName = projectFileName + '_joined.mp4';
-        if (fs.existsSync(path.join(project.projectPath, outputName))) {
+        let outputNameToCheck = `${projectFileName}_joined.${project.type}`;
+
+        if (fs.existsSync(path.join(project.projectPath, outputNameToCheck))) {
             const dirFiles = Commons.readDir(path.join(project.projectPath));
             const fileRegex = /^G[HXS]\d{6}_joined(_\d*)?\.(MP4|mp4|360)/;
             let maxNumber = 1;
