@@ -205,6 +205,7 @@ ipcMain.on('processVideos', (event) => {
             event.sender.send('processVideosStarting');
             return limit(() => VideoProcessor.startProcessing(p, event).catch((e) => {
                 event.sender.send('updateProjectFailed', {'id': p.id});
+                Commons.unlinkIfExists(path.join(p.projectPath, p.outputName));
                 throw e;
             }));
         });
