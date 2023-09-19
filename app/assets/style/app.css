@@ -22,6 +22,7 @@
 body {
     background-color: var(--bg);
     -webkit-user-select: none;
+    overflow: hidden;
 }
 
 #wrapper {
@@ -414,7 +415,7 @@ input[type="text"] {
 #settingsWrapper {
     background-color: var(--bg);
     width: 100%;
-    height: calc(100vh - 40px);
+    height: calc(100vh - 22px);
     position: absolute;
     top: 0;
     left: 0;
@@ -447,6 +448,13 @@ input[type="text"] {
 
 #settingsWrapper .title .goBack:hover {
     opacity: .8;
+}
+
+#settingsWrapper .configGroup {
+    width: 100%;
+    height: calc(100% - 150px);
+    overflow-y: auto;
+    padding-right: 10px;
 }
 
 #settingsWrapper .configLine {
@@ -694,11 +702,10 @@ img.openExternal:hover {
 }
 
 .switch {
-    position: absolute;
+    position: relative;
     display: inline-block;
     width: 48px;
     height: 28px;
-    margin-top: -14px;
     margin-left: -48px;
 }
 
@@ -736,6 +743,11 @@ input:checked + .slider {
     background-color: #e67e22;
 }
 
+input:disabled + .slider {
+    background-color: var(--gray);
+    cursor: not-allowed;
+}
+
 input:focus + .slider {
     box-shadow: 0 0 1px #e67e22;
 }
@@ -770,6 +782,11 @@ select {
     -webkit-appearance: none;
     appearance: none;
     background-size: .65em auto, 100%;
+    cursor: pointer;
+}
+
+select:disabled {
+    cursor: not-allowed;
 }
 
 option {

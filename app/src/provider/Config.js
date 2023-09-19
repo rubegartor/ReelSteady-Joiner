@@ -18,6 +18,7 @@ class Config {
         this.exportOption = 0;
         this.concurrentProjects = 1;
         this.fileModifyDates = 1;
+        this.preservePCMAudio = 0;
     }
 
     loadConfig() {

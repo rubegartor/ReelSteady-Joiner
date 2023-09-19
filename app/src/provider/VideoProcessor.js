@@ -62,14 +62,14 @@ class VideoProcessor {
 
                 this.logGeneralInfo(project);
                 this.generateProjectDir(project);
-                const outputName = this.generateOutputName(project);
+                this.generateOutputName(project);
                 const concatFilePath = this.createConcatFile(project);
-                const outputFilePath = path.join(project.projectPath, outputName);
-                this.logProjectInfo(project, outputName, concatFilePath, outputFilePath);
+                const outputFilePath = path.join(project.projectPath, project.outputName);
+                this.logProjectInfo(project, concatFilePath, outputFilePath);
 
                 this.getAllStreamMaps(project, concatFilePath).then(streamMaps => {
                     return streamMaps.map((m) => {
-                        return `-map 0:${m}`
+                        return config.preservePCMAudio && project.type === ProjectType.PROJECT_360 ? `-map ${m}` : `-map 0:${m}`;
                     });
                 }).catch((e) => {
                     projectError = true;
@@ -78,7 +78,7 @@ class VideoProcessor {
                     const inputOptions = ['-y', '-f concat', '-safe 0'];
                     let outputOptions = ['-c copy', ...maps, '-ignore_unknown'];
 
-                    if (project.type === ProjectType.PROJECT_360) {
+                    if (project.type === ProjectType.PROJECT_360 && !config.preservePCMAudio) {
                         outputOptions.push('-c:a aac');
                     }
 
@@ -108,7 +108,7 @@ class VideoProcessor {
                         reject(err);
                     });
                 }).then(() => {
-                    if (!projectError) return this.processGyro(outputName, project);
+                    if (!projectError) return this.processGyro(project);
                 }).catch((e) => {
                     projectError = true;
                     reject(e);
@@ -121,7 +121,7 @@ class VideoProcessor {
                     if (!projectError) {
                         // Rename output file if project type is 360
                         if (project.type === ProjectType.PROJECT_360) {
-                            const outputNameBase = path.basename(outputName, path.extname(outputName))
+                            const outputNameBase = path.basename(project.outputName, path.extname(project.outputName))
                             fs.renameSync(outputFilePath, path.join(project.projectPath, outputNameBase + '.' + ProjectType.PROJECT_360));
                         }
 
@@ -172,9 +172,9 @@ class VideoProcessor {
     /**
      * Function that logs general info about project
      */
-    static logProjectInfo(project, outputName, concatFilePath, outputFilePath) {
+    static logProjectInfo(project, concatFilePath, outputFilePath) {
         project.log.info(`Project: ${JSON.stringify(project, null, 2)}`);
-        project.log.info(`outputName: ${outputName}`);
+        project.log.info(`outputName: ${project.outputName}`);
         project.log.info(`projectPath: ${project.projectPath}`);
         project.log.info(`concatFilePath: ${concatFilePath}`);
         project.log.info(`outputFilePath: ${outputFilePath}`);
@@ -209,13 +209,13 @@ class VideoProcessor {
      * Function that generates output name for the project
      *
      * @param project
-     * @returns {string} generated output name
      */
     static generateOutputName(project) {
         let projectFileName = path.parse(project.files[0]).name;
         if (config.exportOption === 0) projectFileName = project.name;
 
-        let outputName = projectFileName + '_joined.mp4';
+        let outputExt = config.preservePCMAudio && project.type === ProjectType.PROJECT_360 ? 'mov' : 'mp4';
+        let outputName = `${projectFileName}_joined.${outputExt}`;
         let outputNameToCheck = `${projectFileName}_joined.${project.type}`;
 
         if (fs.existsSync(path.join(project.projectPath, outputNameToCheck))) {
@@ -238,10 +238,10 @@ class VideoProcessor {
                 }
             }
 
-            outputName = `${projectFileName}_joined_${maxNumber}.mp4`;
+            outputName = `${projectFileName}_joined_${maxNumber}.${outputExt}`;
         }
 
-        return outputName;
+        project.outputName = outputName;
     }
 
     /**
@@ -266,12 +266,11 @@ class VideoProcessor {
     /**
      * Function to embed the gyroscope data
      *
-     * @param outputName
      * @param project
      */
-    static processGyro(outputName, project) {
+    static processGyro(project) {
         return new Promise((resolve, reject) => {
-            const args = [project.filePaths[0], path.join(project.projectPath, outputName)];
+            const args = [project.filePaths[0], path.join(project.projectPath, project.outputName)];
             // noinspection JSCheckFunctionSignatures
             const proc = spawn(gyroProcessPath, args);
 
@@ -338,23 +337,27 @@ class VideoProcessor {
      */
     static async getAllStreamMaps(project, concatFilePath) {
         return new Promise((resolve, reject) => {
-            const cmd = `"${ffmpegPath}" -f concat -safe 0 -i ${concatFilePath} -y`;
-            exec(cmd, {cwd: project.projectPath}, function (error, stdout, stderr) {
-                try {
-                    const searchStr = 'Stream #0:';
-                    // noinspection JSUnresolvedFunction
-                    const streamMaps = [...stderr.matchAll(new RegExp(searchStr, 'gi'))]
-                        .map(a => a.input.substring(a.index + searchStr.length, (a.index + searchStr.length) + 1));
+            if (config.preservePCMAudio && project.type === ProjectType.PROJECT_360) {
+                resolve([0]);
+            } else {
+                const cmd = `"${ffmpegPath}" -f concat -safe 0 -i ${concatFilePath} -y`;
+                exec(cmd, {cwd: project.projectPath}, function (error, stdout, stderr) {
+                    try {
+                        const searchStr = 'Stream #0:';
+                        // noinspection JSUnresolvedFunction
+                        const streamMaps = [...stderr.matchAll(new RegExp(searchStr, 'gi'))]
+                            .map(a => a.input.substring(a.index + searchStr.length, (a.index + searchStr.length) + 1));
 
-                    if (streamMaps.length === 0) reject({'error': 'No stream maps found'});
+                        if (streamMaps.length === 0) reject({'error': 'No stream maps found'});
 
-                    project.log.debug(`Extracted maps: ${streamMaps.join(', ')}`);
+                        project.log.debug(`Extracted maps: ${streamMaps.join(', ')}`);
 
-                    resolve(streamMaps);
-                } catch (e) {
-                    reject(e);
-                }
-            });
+                        resolve(streamMaps);
+                    } catch (e) {
+                        reject(e);
+                    }
+                });
+            }
         });
     }
 

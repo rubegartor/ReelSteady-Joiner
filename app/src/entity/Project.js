@@ -12,6 +12,7 @@ class Project {
         this._files = files.sort();
         this._log = undefined;
         this._name = path.parse(this._files[0]).name;
+        this._outputName = '';
         this._duration = 0; //Time in seconds
         this._modifiedDate = '';
         this._failed = false;
@@ -80,6 +81,14 @@ class Project {
 
     set name(value) {
         this._name = value;
+    }
+
+    get outputName() {
+        return this._outputName;
+    }
+
+    set outputName(value) {
+        this._outputName = value;
     }
 
     get duration() {

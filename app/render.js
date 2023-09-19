@@ -37,6 +37,7 @@ const projectContainer = ui.get('projectContainer');
 const concurrentDownBtn = ui.get('concurrentDownBtn');
 const concurrentUpBtn = ui.get('concurrentUpBtn');
 const concurrentProjectsOption = ui.get('concurrentProjectsOption');
+const preservePCMAudioOption = ui.get('preservePCMAudioOption');
 
 updateView();
 updateConfigDOM();
@@ -105,6 +106,10 @@ ui.onClick(projectSavePathBtn, () => {
 
 ui.onClick(fileModifyDatesOption, function(e) {
     ipcRenderer.send('updateConfig', {'key': 'fileModifyDates', 'value': e.target.checked});
+});
+
+ui.onClick(preservePCMAudioOption, function(e) {
+    ipcRenderer.send('updateConfig', {'key': 'preservePCMAudio', 'value': e.target.checked});
 });
 
 ui.onClick(document, (event) => {
@@ -262,6 +267,7 @@ ipcRenderer.on('processVideosFinished', () => {
     ui.enable(concurrentDownBtn);
     ui.enable(projectExportOptions);
     ui.enable(fileModifyDatesOption);
+    ui.enable(preservePCMAudioOption);
 });
 
 ipcRenderer.on('processVideosStarted', () => {
@@ -272,6 +278,7 @@ ipcRenderer.on('processVideosStarted', () => {
     ui.disable(projectSavePathBtn);
     ui.disable(concurrentUpBtn);
     ui.disable(concurrentDownBtn);
+    ui.disable(preservePCMAudioOption);
 });
 
 ipcRenderer.on('processVideosStarting', () => {
@@ -367,6 +374,7 @@ function updateConfigDOM() {
     }
 
     fileModifyDatesOption.checked = config.fileModifyDates;
+    preservePCMAudioOption.checked = config.preservePCMAudio;
 }
 
 /**
