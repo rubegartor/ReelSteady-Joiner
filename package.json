@@ -13,19 +13,19 @@
   "license": "MIT",
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "electron": "^22.3.6",
-    "electron-builder": "^23.3.3"
+    "electron": "^26.2.3",
+    "electron-builder": "^24.6.4"
   },
   "dependencies": {
-    "axios": "^0.27.2",
-    "electron-log": "^4.4.1",
+    "axios": "^1.5.1",
+    "electron-log": "^4.4.8",
     "electron-unhandled": "^4.0.1",
     "electron-util": "^0.17.2",
-    "ffmpeg-static": "^4.4.0",
+    "ffmpeg-static": "^5.2.0",
     "fluent-ffmpeg": "^2.1.2",
-    "moment": "^2.29.1",
+    "moment": "^2.29.4",
     "p-limit": "3.1.0",
-    "uuid": "^8.3.2",
-    "valid-filename": "^3.1.0"
+    "uuid": "^9.0.1",
+    "valid-filename": "3.1.0"
   }
 }
