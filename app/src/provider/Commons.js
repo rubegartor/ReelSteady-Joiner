@@ -32,6 +32,28 @@ module.exports = {
     },
 
     /**
+     * Function that sorts gopro names (Main and render process)
+     * Accepts a maximum number of 999 chapters
+     *
+     * @param arr
+     * @returns array
+     */
+    sortGoProNames(arr) {
+        return arr.sort(function (x, y) {
+            x = isNaN(x.substring(1, 4)) ? x.substring(2, 4) : x.substring(1, 4);
+            y = isNaN(y.substring(1, 4)) ? y.substring(2, 4) : y.substring(1, 4);
+
+            x = parseInt(x);
+            y = parseInt(y);
+
+            if (x < y) return -1;
+            if (x > y) return 1;
+
+            return 0;
+        });
+    },
+
+    /**
      * Function that converts date to string (Main and render process)
      *
      * @param date
