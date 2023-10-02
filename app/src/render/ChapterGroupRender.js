@@ -16,7 +16,8 @@ class ChapterGroupRender {
      * @returns {HTMLDivElement}
      */
     toHTML() {
-        const sortedFiles = this._files.sort();
+        const sortedFiles = Commons.sortGoProNames(this._files);
+
         const fileStat = fs.statSync(path.join(this._dirPath, sortedFiles[0]));
         const fileMTime = Commons.dateToStr(fileStat.mtime);
 

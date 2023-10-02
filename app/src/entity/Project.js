@@ -2,6 +2,7 @@ const path = require('path');
 const {v4: uuidv4} = require('uuid');
 const VideoProcessor = require('../provider/VideoProcessor');
 const ProjectType = require('../entity/ProjectType');
+const Commons = require('../provider/Commons');
 
 class Project {
     constructor(dirPath, files) {
@@ -9,7 +10,7 @@ class Project {
         this._type = undefined;
         this._projectPath = undefined;
         this._dirPath = dirPath;
-        this._files = files.sort();
+        this._files = Commons.sortGoProNames(files);
         this._log = undefined;
         this._name = path.parse(this._files[0]).name;
         this._outputName = '';

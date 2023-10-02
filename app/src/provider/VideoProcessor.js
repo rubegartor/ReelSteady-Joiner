@@ -80,6 +80,7 @@ class VideoProcessor {
 
                     if (project.type === ProjectType.PROJECT_360 && !config.preservePCMAudio) {
                         outputOptions.push('-c:a aac');
+                        outputOptions.push('-af channelmap=0');
                     }
 
                     return new Promise((resolve, reject) => {
@@ -220,7 +221,7 @@ class VideoProcessor {
 
         if (fs.existsSync(path.join(project.projectPath, outputNameToCheck))) {
             const dirFiles = Commons.readDir(path.join(project.projectPath));
-            const fileRegex = /^G[HXS]\d{6}_joined(_\d*)?\.(MP4|mp4|360)/;
+            const fileRegex = /^(G[HXS]\d{6}|\d{7})_joined(_\d*)?\.(MP4|mp4|360)/;
             let maxNumber = 1;
 
             for (const file of dirFiles) {
@@ -340,9 +341,13 @@ class VideoProcessor {
             if (config.preservePCMAudio && project.type === ProjectType.PROJECT_360) {
                 resolve([0]);
             } else {
-                const cmd = `"${ffmpegPath}" -f concat -safe 0 -i ${concatFilePath} -y`;
+                const cmd = `"${ffmpegPath}" -f concat -safe 0 -i "${concatFilePath}" -y`;
                 exec(cmd, {cwd: project.projectPath}, function (error, stdout, stderr) {
                     try {
+                        project.log.debug(`error: ${error.toString()}`);
+                        project.log.debug(`stdout: ${stdout.toString()}`);
+                        project.log.debug(`stdout: ${stderr.toString()}`);
+
                         const searchStr = 'Stream #0:';
                         // noinspection JSUnresolvedFunction
                         const streamMaps = [...stderr.matchAll(new RegExp(searchStr, 'gi'))]
@@ -377,7 +382,7 @@ class VideoProcessor {
                         const duration = output.substring(0, output.indexOf(','));
                         resolve(duration);
                     } else {
-                        reject({'error': error, 'stderr': stderr});
+                        reject({'error': error, 'stderr': stderr, 'stdout': stdout});
                     }
                 });
             });
@@ -412,7 +417,7 @@ class VideoProcessor {
 
         //Get GoPro files
         for (const file of files) {
-            if (/^G[HXS]\d{6}\.(MP4|mp4|360)/.test(file) && !goProFiles.includes(file)) {
+            if (/^(G[HXS]\d{6}|\d{7})\.(MP4|mp4|360)/.test(file) && !goProFiles.includes(file)) {
                 goProFiles.push(file);
             }
         }
@@ -430,15 +435,16 @@ class VideoProcessor {
 
         //Sort chapters in groups
         for (const [key, values] of Object.entries(goProGroupedFiles)) {
-            goProGroupedFiles[key] = values.sort();
+            goProGroupedFiles[key] = Commons.sortGoProNames(values);
         }
 
         //Check consecutive chapters in groups
         for (const [key, values] of Object.entries(goProGroupedFiles)) {
-            let lastChapterNum = 1;
+            const firstValue = values[0];
+            let lastChapterNum = parseInt(isNaN(firstValue.substring(1, 4)) ? firstValue.substring(2, 4) : firstValue.substring(1, 4));
 
             for (const chapterFile of values) {
-                const chapterNum = chapterFile.substring(2, 4);
+                const chapterNum = isNaN(chapterFile.substring(1, 4)) ? chapterFile.substring(2, 4) : chapterFile.substring(1, 4);
 
                 if (parseInt(chapterNum) !== lastChapterNum) {
                     throw new NotConsecutiveChaptersError(`Group (${key}) have not consecutive chapters`);
