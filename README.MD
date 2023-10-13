@@ -6,7 +6,7 @@ _Merge your video files extracted from GoPro without losing quality or gyroscope
 
 _Perfect for long videos like long range drone footage_
 
-Supported on **Windows** & **MacOS** with GoPro Hero 6, 7, 8, 9, 10 and MAX
+Supported on **Windows** & **MacOS** with GoPro Hero 6, 7, 8, 9, 10, 11, 12 and MAX
 
 ## Starting 🚀
 
@@ -22,21 +22,21 @@ _Download and execute installer (**[Releases tab](https://github.com/rubegartor/
       1. **Select project save path**: Specify the path where the output video will be stored
       2. **Export to source path**: The output video will automatically be stored at the same location of the origin video
 
-![Settings](https://i.imgur.com/ChiR3RN.png)
+![Settings](https://i.imgur.com/LhvV8bs.png)
 
 2. Select the folder containing mp4/360 files to concatenate (Normally 4GB chunks or less) (ReelSteady Joiner will take care of finding the files) and start merge process
 
-![Select files](https://i.imgur.com/d5LSXdp.png)
-![Select files](https://i.imgur.com/zMIcsCo.png)
+![Select files](https://i.imgur.com/AE52QyM.png)
+![Select files](https://i.imgur.com/NaQsp2t.png)
 
 3. Customize your projects
 
-![Customize](https://i.imgur.com/DnfD9oz.png)
+![Customize](https://i.imgur.com/i5WJQ3A.png)
 
 4. Let ReelSteady Joiner work and combine all the videos
 
-![Processing videos](https://i.imgur.com/dKj0AzU.png)
-![Processing videos](https://i.imgur.com/rwX66Ng.png)
+![Processing videos](https://i.imgur.com/dA1ACkn.png)
+![Processing videos](https://i.imgur.com/Ur50wHt.png)
 
 ---
 
