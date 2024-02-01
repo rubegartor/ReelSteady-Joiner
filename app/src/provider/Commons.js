@@ -3,6 +3,11 @@ const fs = require('fs');
 const moment = require('moment');
 const {ipcRenderer} = require('electron');
 
+const HERO5LOW = 'hero5-';
+const HERO5HIGH = 'hero+';
+const HEROMAX = 'max';
+const NONE = 'undefined';
+
 module.exports = {
     /**
      * Function that returns if app is packaged or not (Only for main process)
@@ -32,6 +37,32 @@ module.exports = {
     },
 
     /**
+     * Function that try to identify GoPro camera model based on file naming convention
+     *
+     * @param fileName
+     * @returns {string}
+     */
+    identifyGoProModel(fileName) {
+        const validHERO5Pus = ['GH', 'GX'];
+
+        for (const token of validHERO5Pus) {
+            if (fileName.startsWith(token)) {
+                return HERO5HIGH;
+            }
+        }
+
+        if (fileName.startsWith('GS')) {
+            return HEROMAX;
+        }
+
+        if (fileName.startsWith('GOPR') || fileName.startsWith('GP')) {
+            return HERO5LOW;
+        }
+
+        return NONE;
+    },
+
+    /**
      * Function that sorts gopro names (Main and render process)
      * Accepts a maximum number of 999 chapters
      *
@@ -40,6 +71,14 @@ module.exports = {
      */
     sortGoProNames(arr) {
         return arr.sort(function (x, y) {
+            if (module.exports.identifyGoProModel(x) === HERO5LOW) {
+                return 1;
+            }
+
+            if (module.exports.identifyGoProModel(y) === HERO5LOW) {
+                return -1;
+            }
+
             x = isNaN(x.substring(1, 4)) ? x.substring(2, 4) : x.substring(1, 4);
             y = isNaN(y.substring(1, 4)) ? y.substring(2, 4) : y.substring(1, 4);
 
@@ -107,5 +146,9 @@ module.exports = {
         return JSON.parse(JSON.stringify(array))
     },
 
+    HERO5LOW,
+    HERO5HIGH,
+    HEROMAX,
+    NONE,
     version
 }
