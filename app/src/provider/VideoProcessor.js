@@ -316,7 +316,7 @@ class VideoProcessor {
 
         if (fs.existsSync(path.join(project.projectPath, outputNameToCheck))) {
             const dirFiles = Commons.readDir(path.join(project.projectPath));
-            const fileRegex = /^(G[HXS]?(\d{6}|\d{7}))_joined(_\d*)?\.(MP4|mp4|360)/;
+            const fileRegex = /^(G(OPR)?[HXS]?(\d{6}|\d{7}|\d{4}))_joined(_\d*)?\.(MP4|mp4|360)/;
             let maxNumber = 1;
 
             for (const file of dirFiles) {
@@ -542,13 +542,32 @@ class VideoProcessor {
      * @returns {{}}
      */
     static scanGoProDir(dirPath) {
+        const HERO5LOWRegex = /^(G(OPR)?(P)?(\d{6}|\d{4}))\.(MP4|mp4)/;
+        const HERO5HIGHRegex = /^G[PHXS]?(\d{6}|\d{7})\.(MP4|mp4)/;
+        const MAXRegex = /^GS?(\d{6}|\d{7})\.360/;
+
         const goProGroupedFiles = {};
         const goProFiles = [];
         const files = Commons.readDir(dirPath);
 
         //Get GoPro files
         for (const file of files) {
-            if (/^(G[HXS]?(\d{6}|\d{7}))\.(MP4|mp4|360)/.test(file) && !goProFiles.includes(file)) {
+            let rgx;
+            switch (Commons.identifyGoProModel(file)) {
+                case Commons.HERO5LOW:
+                    rgx = HERO5LOWRegex;
+                    break;
+                case Commons.HERO5HIGH:
+                    rgx = HERO5HIGHRegex;
+                    break;
+                case Commons.HEROMAX:
+                    rgx = MAXRegex;
+                    break;
+                case Commons.NONE:
+                    continue;
+            }
+
+            if (rgx.test(file) && !goProFiles.includes(file)) {
                 goProFiles.push(file);
             }
         }
@@ -571,13 +590,10 @@ class VideoProcessor {
 
         //Check consecutive chapters in groups
         for (const [key, values] of Object.entries(goProGroupedFiles)) {
-            const firstValue = values[0];
-            let lastChapterNum = parseInt(isNaN(firstValue.substring(1, 4)) ? firstValue.substring(2, 4) : firstValue.substring(1, 4));
+            let lastChapterNum = this.getChapterNum(values[0]);
 
             for (const chapterFile of values) {
-                const chapterNum = isNaN(chapterFile.substring(1, 4)) ? chapterFile.substring(2, 4) : chapterFile.substring(1, 4);
-
-                if (parseInt(chapterNum) !== lastChapterNum) {
+                if (this.getChapterNum(chapterFile) !== lastChapterNum) {
                     throw new NotConsecutiveChaptersError(`Group (${key}) have not consecutive chapters`);
                 } else {
                     lastChapterNum++;
@@ -586,6 +602,31 @@ class VideoProcessor {
         }
 
         return goProGroupedFiles;
+    }
+
+
+    /**
+     * Function that gets chapter number of gopro file name
+     *
+     * @param chapterFile
+     * @returns {number}
+     */
+    static getChapterNum(chapterFile) {
+        let chapterNum = 0;
+
+        switch (Commons.identifyGoProModel(chapterFile)) {
+            case Commons.HERO5LOW:
+                if (!chapterFile.startsWith('GOPR')) {
+                    chapterNum = isNaN(chapterFile.substring(1, 4)) ? chapterFile.substring(2, 4) : chapterFile.substring(1, 4);
+                }
+                break;
+            case Commons.HEROMAX:
+            case Commons.HERO5HIGH:
+                chapterNum = isNaN(chapterFile.substring(1, 4)) ? chapterFile.substring(2, 4) : chapterFile.substring(1, 4);
+                break;
+        }
+
+        return Number(chapterNum);
     }
 
     /**
