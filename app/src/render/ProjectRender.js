@@ -44,7 +44,7 @@ class ProjectRender {
     /**
      * Function that generates project HTML
      *
-     * @returns {HTMLDivElement}
+     * @returns {Electron.WebviewTag}
      */
     toHTML() {
         const project = ui.createElem('div');
@@ -128,7 +128,7 @@ class ProjectRender {
     /**
      * Function to show empty message when project count is 0
      *
-     * @returns {HTMLDivElement}
+     * @returns {Electron.WebviewTag}
      */
     toEmptyHTML() {
         const emptyProject = ui.createElem('div');

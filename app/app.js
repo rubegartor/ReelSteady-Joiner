@@ -18,7 +18,7 @@ const {shell, ipcMain, app, dialog} = require('electron');
 const fs = require('fs');
 const pLimit = require('p-limit');
 
-const Config = require('./src/provider/Config');
+const {Config} = require('./src/provider/Config');
 global.config = new Config();
 config.loadConfig();
 

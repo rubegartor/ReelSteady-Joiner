@@ -13,7 +13,7 @@ class ChapterGroupRender {
     /**
      * Function that generates chapter group HTML
      *
-     * @returns {HTMLDivElement}
+     * @returns {Electron.WebviewTag}
      */
     toHTML() {
         const sortedFiles = Commons.sortGoProNames(this._files);
@@ -47,7 +47,7 @@ class ChapterGroupRender {
     /**
      * Function to show empty message when chapters count is 0
      *
-     * @returns {HTMLDivElement}
+     * @returns {Electron.WebviewTag}
      */
     static toHTMLEmpty() {
         const emptyGroup = ui.createElem('div');

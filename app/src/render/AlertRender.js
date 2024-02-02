@@ -31,7 +31,7 @@ class AlertRender {
     /**
      * Function that generates HTML alert element
      *
-     * @returns {HTMLDivElement}
+     * @returns {Electron.WebviewTag}
      */
     toHTML() {
         const alert = ui.createElem('div');

@@ -2,21 +2,22 @@ const {ipcRenderer} = require('electron');
 const os = require('os');
 const axios = require('axios');
 
+const NotConsecutiveChaptersError = require(`../src/exceptions/NotConsecutiveChaptersError`);
+const RenderProcessError = require(`../src/exceptions/RenderProcessError`);
+
 window.onerror = function(error, url, line) {
     ipcRenderer.send('errorInWindow', new RenderProcessError(error, url, line));
 };
 
-const ui = require('../src/commons/ui');
-const svg = require('../src/commons/svg');
+const ui = require(`../src/commons/ui`);
+const svg = require(`../src/commons/svg`);
 
 
-const NotConsecutiveChaptersError = require('../src/exceptions/NotConsecutiveChaptersError');
-const RenderProcessError = require('../src/exceptions/RenderProcessError');
-
-const ChapterGroupRender = require('../src/render/ChapterGroupRender');
-const ProjectRender = require('../src/render/ProjectRender');
-const AlertRender = require('../src/render/AlertRender');
-const Commons = require('../src/provider/Commons');
+const ChapterGroupRender = require(`../src/render/ChapterGroupRender`);
+const ProjectRender = require(`../src/render/ProjectRender`);
+const AlertRender = require(`../src/render/AlertRender`);
+const Commons = require(`../src/provider/Commons`);
+const {FFMPEG_PROCESSING_TYPE} = require(`../src/provider/Config`);
 
 // Javascript interface elements
 const closeWindowBtn = ui.get('closeWindow');
@@ -38,6 +39,7 @@ const concurrentDownBtn = ui.get('concurrentDownBtn');
 const concurrentUpBtn = ui.get('concurrentUpBtn');
 const concurrentProjectsOption = ui.get('concurrentProjectsOption');
 const preservePCMAudioOption = ui.get('preservePCMAudioOption');
+const projectProcessingTypeOptions = ui.get('projectProcessingTypeOptions');
 
 updateView();
 updateConfigDOM();
@@ -164,16 +166,25 @@ ui.onClick(concurrentDownBtn, () => {
     ipcRenderer.send('updateConfig', {'key': 'concurrentProjects', 'value': parseInt(concurrentProjectsOption.value)});
 });
 
+ui.onChange(projectProcessingTypeOptions, () => {
+    const select = ui.get('projectProcessingTypeOptions');
+    for (const option of ui.getWithSelector(`option`, select)) {
+        option.removeAttribute('selected');
+    }
+
+    const selectValue = select.options[select.selectedIndex].value;
+
+    select.options[select.selectedIndex].setAttribute('selected', 'selected');
+
+    ipcRenderer.send('updateConfig', {'key': 'processingType', 'value': selectValue});
+});
+
+
 /**
  * Get selected chapter group
  */
 function getChapterGroupsToProcess() {
     const chapterGroups = ui.getWithSelector("[data-type='chapterGroup']");
-
-    // Remove old projects completed before adding new ones
-    for (const project of ipcRenderer.sendSync('getProjects')) {
-        if (project.completed) project.remove();
-    }
 
     if (chapterGroups.length > 0) {
         Array.from(ui.getWithClass('empty-item')).map((e) => e.remove());
@@ -197,17 +208,15 @@ function getChapterGroupsToProcess() {
 
     const waitFor = (cd, cb) => { cd() ? cb() : setTimeout(waitFor.bind(null, cd, cb), 50) };
     waitFor(() => {
-        const projects = ipcRenderer.sendSync('getProjects');
         let projectsAvailable = [];
 
-        for (const project of projects) {
+        for (const project of ipcRenderer.sendSync('getProjects')) {
             projectsAvailable.push(project._available);
         }
 
         //Check if all projects are available
-        return projectsAvailable.every(p => p);
+        return projectsAvailable.every(p => p === true);
     }, () => {
-
         ui.enable(processVideosBtn);
     });
 }
@@ -268,6 +277,7 @@ ipcRenderer.on('processVideosFinished', () => {
     ui.enable(projectExportOptions);
     ui.enable(fileModifyDatesOption);
     ui.enable(preservePCMAudioOption);
+    ui.enable(projectProcessingTypeOptions);
 });
 
 ipcRenderer.on('processVideosStarted', () => {
@@ -279,6 +289,7 @@ ipcRenderer.on('processVideosStarted', () => {
     ui.disable(concurrentUpBtn);
     ui.disable(concurrentDownBtn);
     ui.disable(preservePCMAudioOption);
+    ui.disable(projectProcessingTypeOptions);
 });
 
 ipcRenderer.on('processVideosStarting', () => {
@@ -300,16 +311,21 @@ ipcRenderer.on('setMaxProjectProgress', (event, args) => {
 });
 
 ipcRenderer.on('updateProjectProgress', (event, args) => {
-    let timeIndex = args.progress.timemark.indexOf('time=');
-    let time = args.progress.timemark.trim().substring(timeIndex, 11);
-    let parsedTime = time.split(':');
-    let secs = 0;
+    let advance = 0;
 
-    secs += parsedTime[0] * 3600;
-    secs += parsedTime[1] * 60;
-    secs += parseInt(parsedTime[2]);
+    if (args.type === FFMPEG_PROCESSING_TYPE) {
+        let timeIndex = args.progress.timemark.indexOf('time=');
+        let time = args.progress.timemark.trim().substring(timeIndex, 11);
+        let parsedTime = time.split(':');
 
-    ui.getWithSelector(`[data-progress-${args.id}]`)[0].setAttribute('value', secs);
+        advance += parsedTime[0] * 3600;
+        advance += parsedTime[1] * 60;
+        advance += parseInt(parsedTime[2]);
+    } else {
+        advance = args.progress;
+    }
+
+    ui.getWithSelector(`[data-progress-${args.id}]`)[0].setAttribute('value', advance);
 });
 
 ipcRenderer.on('updateProjectCompleted', (event, args) => {
@@ -367,11 +383,11 @@ function updateConfigDOM() {
     concurrentProjectsOption.value = config.concurrentProjects;
 
     ui.getWithSelector(`option[value="${config.exportOption}"]`, projectExportOptions)[0].setAttribute('selected', 'selected');
-    switch (config.exportOption) {
-        case 0:
-            ui.show(projectSavePathContainer);
-            break;
+    if (config.exportOption === 0) {
+        ui.show(projectSavePathContainer);
     }
+
+    ui.getWithSelector(`option[value="${config.processingType}"]`, projectProcessingTypeOptions)[0].setAttribute('selected', 'selected');
 
     fileModifyDatesOption.checked = config.fileModifyDates;
     preservePCMAudioOption.checked = config.preservePCMAudio;
