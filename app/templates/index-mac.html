@@ -81,6 +81,22 @@
         <div class="configLine">
             <div class="configLineContent">
                 <div>
+                    <div class="configName">Processing type</div>
+                    <div class="configDescription">
+                        Method to use to merge video files (MP4Merge recommended)
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <select id="projectProcessingTypeOptions">
+                        <option value="ffmpeg">FFmpeg</option>
+                        <option value="mp4merge">MP4Merge</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="configLine">
+            <div class="configLineContent">
+                <div>
                     <div class="configName">Projects queue</div>
                     <div class="configDescription">
                         Number of projects that can be processed at the same time (Max: 5)
@@ -115,7 +131,7 @@
                     <div class="configName">Preserve PCM audio</div>
                     <div class="configDescription">
                         If enabled, 360 files will be processed using the mov format, retain PCM audio<br/>
-                        and the file will be slightly larger (Only for 360 files)
+                        and the file will be slightly larger (Only for 360 files and FFmpeg processing type)
                     </div>
                 </div>
                 <div class="d-flex vertical-center">

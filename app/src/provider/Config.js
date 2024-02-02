@@ -11,6 +11,9 @@ const CONFIG_DIR_MAC = path.join(os.homedir(), '.reelsteady-joiner');
 
 const CONFIG_DIR = os.platform() === 'darwin' ? CONFIG_DIR_MAC : CONFIG_DIR_WIN;
 
+const FFMPEG_PROCESSING_TYPE = 'ffmpeg';
+const MP4MERGE_PROCESSING_TYPE = 'mp4merge';
+
 class Config {
     constructor() {
         // noinspection JSUnusedGlobalSymbols
@@ -19,6 +22,7 @@ class Config {
         this.concurrentProjects = 1;
         this.fileModifyDates = 1;
         this.preservePCMAudio = 0;
+        this.processingType = MP4MERGE_PROCESSING_TYPE;
     }
 
     loadConfig() {
@@ -56,4 +60,4 @@ class Config {
     }
 }
 
-module.exports = Config;
+module.exports = {Config, FFMPEG_PROCESSING_TYPE, MP4MERGE_PROCESSING_TYPE};

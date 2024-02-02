@@ -8,6 +8,7 @@ const ffmpegPath = require('ffmpeg-static').replace('app.asar', 'app.asar.unpack
 const ffmpeg = require('fluent-ffmpeg');
 const Commons = require('../provider/Commons');
 const ProjectType = require('../entity/ProjectType');
+const {FFMPEG_PROCESSING_TYPE, MP4MERGE_PROCESSING_TYPE} = require('../provider/Config');
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -19,22 +20,35 @@ const macExePath = path.join(app.getAppPath(), '..', '..');
 
 let exifToolConfigPath = undefined;
 let gyroProcessPath = undefined;
+let mp4MergePath = undefined;
 let exiftool = undefined;
 
 switch (os.platform()) {
     case 'darwin':
         gyroProcessPath = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'udtacopy') : path.join(macExePath, 'app', 'bin', 'mac', 'udtacopy');
+
+        switch (os.arch()) {
+            case 'arm64':
+                mp4MergePath =  Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'mp4merge-arm64') : path.join(macExePath, 'app', 'bin', 'mac', 'mp4merge-arm64');
+                break;
+            case 'x64':
+                mp4MergePath =  Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'mp4merge') : path.join(macExePath, 'app', 'bin', 'mac', 'mp4merge');
+                break;
+        }
+
         exiftool = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'exiftool', 'exiftool') : path.join(macExePath, 'app', 'bin', 'mac', 'exiftool', 'exiftool');
         exifToolConfigPath = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'exiftool.config') : path.join(macExePath, 'app', 'bin', 'exiftool.config');
 
         //Give execution permissions to utilities
         if (Commons.isDev()) {
             fs.chmodSync(gyroProcessPath, 0o755);
+            fs.chmodSync(mp4MergePath, 0o755);
             fs.chmodSync(exiftool, 0o755);
         }
         break;
     case 'win32':
         gyroProcessPath = path.join(exePath, 'app', 'bin', 'win', 'udtacopy.exe');
+        mp4MergePath = path.join(exePath, 'app', 'bin', 'win', 'mp4merge.exe')
         exiftool = path.join(exePath, 'app', 'bin', 'win', 'exiftool.exe');
         exifToolConfigPath = path.join(exePath, 'app', 'bin', 'exiftool.config');
         break;
@@ -57,8 +71,11 @@ class VideoProcessor {
             waitFor(() => {
                 return project.available
             }, () => {
-                event.sender.send('setMaxProjectProgress', {'id': project.id, 'max': project.duration});
-                let projectError = false;
+                if (config.processingType === FFMPEG_PROCESSING_TYPE) {
+                    event.sender.send('setMaxProjectProgress', {'id': project.id, 'max': project.duration});
+                } else {
+                    event.sender.send('setMaxProjectProgress', {'id': project.id, 'max': 100}); // 100%
+                }
 
                 this.logGeneralInfo(project);
                 this.generateProjectDir(project);
@@ -67,75 +84,147 @@ class VideoProcessor {
                 const outputFilePath = path.join(project.projectPath, project.outputName);
                 this.logProjectInfo(project, concatFilePath, outputFilePath);
 
-                this.getAllStreamMaps(project, concatFilePath).then(streamMaps => {
-                    return streamMaps.map((m) => {
-                        return config.preservePCMAudio && project.type === ProjectType.PROJECT_360 ? `-map ${m}` : `-map 0:${m}`;
-                    });
-                }).catch((e) => {
-                    projectError = true;
-                    reject(e);
-                }).then(maps => {
-                    const inputOptions = ['-y', '-f concat', '-safe 0'];
-                    let outputOptions = ['-c copy', ...maps, '-ignore_unknown'];
-
-                    if (project.type === ProjectType.PROJECT_360 && !config.preservePCMAudio) {
-                        outputOptions.push('-c:a aac');
-                        outputOptions.push('-af channelmap=0');
-                    }
-
-                    return new Promise((resolve, reject) => {
-                        // noinspection JSUnresolvedFunction
-                        new ffmpeg(concatFilePath)
-                            .on('progress', (progress) => {
-                                try {
-                                    event.sender.send('updateProjectProgress', {
-                                        'id': project.id,
-                                        'progress': progress
-                                    });
-                                } catch (_) {
-                                } //Skip error when killing ffmpeg process on application close
-                            })
-                            .on('error', (err, stdout, stderr) => {
-                                reject({'err': err, 'stdout': stdout, 'stderr': stderr});
-                            })
-                            .on('start', (cmd) => project.log.debug(cmd))
-                            .on('stderr', (stderr) => project.log.debug(stderr))
-                            .on('end', resolve)
-                            .inputOptions(inputOptions)
-                            .outputOptions(outputOptions)
-                            .save(outputFilePath);
-                    }).catch((err) => {
-                        projectError = true;
-                        reject(err);
-                    });
-                }).then(() => {
-                    if (!projectError) return this.processGyro(project);
-                }).catch((e) => {
-                    projectError = true;
-                    reject(e);
-                }).then(() => {
-                    if (!projectError) return this.setCustomMetadata(project, outputFilePath);
-                }).catch((e) => {
-                    projectError = true;
-                    reject(e);
-                }).then(() => {
-                    if (!projectError) {
-                        // Rename output file if project type is 360
-                        if (project.type === ProjectType.PROJECT_360) {
-                            const outputNameBase = path.basename(project.outputName, path.extname(project.outputName))
-                            fs.renameSync(outputFilePath, path.join(project.projectPath, outputNameBase + '.' + ProjectType.PROJECT_360));
-                        }
-
-                        Commons.unlinkIfExists(concatFilePath);
-                        project.completed = true;
-                        event.sender.send('updateProjectCompleted', {'id': project.id});
-                        resolve();
-                    }
-                }).catch((e) => {
-                    projectError = true;
-                    reject(e);
-                });
+                if (config.processingType === FFMPEG_PROCESSING_TYPE) {
+                    this.processWithFFmpeg(project, event, concatFilePath, outputFilePath, resolve, reject);
+                } else {
+                    this.processWithMp4Merge(project, event, concatFilePath, outputFilePath, resolve, reject);
+                }
             });
+        });
+    }
+
+    /**
+     * Process video files with FFmpeg
+     *
+     * @param project
+     * @param event
+     * @param concatFilePath
+     * @param outputFilePath
+     * @param res
+     * @param rej
+     */
+    static processWithFFmpeg(project, event, concatFilePath, outputFilePath, res, rej) {
+        let projectError = false;
+
+        this.getAllStreamMaps(project, concatFilePath).then(streamMaps => {
+            return streamMaps.map((m) => {
+                return config.preservePCMAudio && project.type === ProjectType.PROJECT_360 ? `-map ${m}` : `-map 0:${m}`;
+            });
+        }).catch((e) => {
+            projectError = true;
+            rej(e);
+        }).then(maps => {
+            const inputOptions = ['-y', '-f concat', '-safe 0'];
+            let outputOptions = ['-c copy', ...maps, '-ignore_unknown'];
+
+            if (project.type === ProjectType.PROJECT_360 && !config.preservePCMAudio) {
+                outputOptions.push('-c:a aac');
+                outputOptions.push('-af channelmap=0');
+            }
+
+            return new Promise((resolve, reject) => {
+                // noinspection JSUnresolvedFunction
+                new ffmpeg(concatFilePath)
+                    .on('progress', (progress) => {
+                        try {
+                            event.sender.send('updateProjectProgress', {
+                                'id': project.id,
+                                'type': FFMPEG_PROCESSING_TYPE,
+                                'progress': progress
+                            });
+                        } catch (_) {
+                        } //Skip error when killing ffmpeg process on application close
+                    })
+                    .on('error', (err, stdout, stderr) => {
+                        reject({'err': err, 'stdout': stdout, 'stderr': stderr});
+                    })
+                    .on('start', (cmd) => project.log.debug(cmd))
+                    .on('stderr', (stderr) => project.log.debug(stderr))
+                    .on('end', resolve)
+                    .inputOptions(inputOptions)
+                    .outputOptions(outputOptions)
+                    .save(outputFilePath);
+            }).catch((err) => {
+                projectError = true;
+                rej(err);
+            });
+        }).then(() => {
+            if (!projectError) return this.processGyro(project);
+        }).catch((e) => {
+            projectError = true;
+            rej(e);
+        }).then(() => {
+            if (!projectError) return this.setCustomMetadata(project, outputFilePath);
+        }).catch((e) => {
+            projectError = true;
+            rej(e);
+        }).then(() => {
+            if (!projectError) {
+                // Rename output file if project type is 360
+                if (project.type === ProjectType.PROJECT_360) {
+                    const outputNameBase = path.basename(project.outputName, path.extname(project.outputName))
+                    fs.renameSync(outputFilePath, path.join(project.projectPath, outputNameBase + '.' + ProjectType.PROJECT_360));
+                }
+
+                Commons.unlinkIfExists(concatFilePath);
+                project.completed = true;
+                event.sender.send('updateProjectCompleted', {'id': project.id});
+                res();
+            }
+        }).catch((e) => {
+            projectError = true;
+            rej(e);
+        });
+    }
+
+    /**
+     * Process video files with MP4Merge
+     *
+     * @param project
+     * @param event
+     * @param concatFilePath
+     * @param outputFilePath
+     * @param res
+     * @param rej
+     */
+    static processWithMp4Merge(project, event, concatFilePath, outputFilePath, res, rej) {
+        let projectError = false;
+
+        function updateProgress(data) {
+            try {
+                event.sender.send('updateProjectProgress', {
+                    'id': project.id,
+                    'type': MP4MERGE_PROCESSING_TYPE,
+                    'progress': data
+                });
+            } catch (_) {
+            } //Skip error when killing ffmpeg process on application close
+        }
+
+        this.mergeFilesWithMp4Merge(project, updateProgress).catch((e) => {
+            projectError = true;
+            rej(e);
+        }).then(() => {
+            if (!projectError) return this.setCustomMetadata(project, outputFilePath);
+        }).catch((e) => {
+            projectError = true;
+            rej(e);
+        }).then(() => {
+            if (!projectError) {
+                // Rename output file if project type is 360
+                if (project.type === ProjectType.PROJECT_360) {
+                    const outputNameBase = path.basename(project.outputName, path.extname(project.outputName))
+                    fs.renameSync(outputFilePath, path.join(project.projectPath, outputNameBase + '.' + ProjectType.PROJECT_360));
+                }
+
+                Commons.unlinkIfExists(concatFilePath);
+                project.completed = true;
+                event.sender.send('updateProjectCompleted', {'id': project.id});
+                res();
+            }
+        }).catch((e) => {
+            projectError = true;
+            rej(e);
         });
     }
 
@@ -165,6 +254,7 @@ class VideoProcessor {
         project.log.info(`exePath: ${exePath}`);
         project.log.info(`macExePath: ${macExePath}`);
         project.log.info(`ffmpegPath: ${ffmpegPath}`);
+        project.log.info(`mp4mergePath ${mp4MergePath}`);
         project.log.info(`gyroProcessPath: ${gyroProcessPath}`);
         project.log.info(`exiftool: ${exiftool}`);
         project.log.info(`exiftool config: ${exifToolConfigPath}`);
@@ -215,6 +305,8 @@ class VideoProcessor {
         let projectFileName = path.parse(project.files[0]).name;
         if (config.exportOption === 0) projectFileName = project.name;
 
+        // TODO: revisar todos los sitios donde se usa config.preservePCMAudio y comprobar tambien que el tipo de procesamiento sea ffmpeg
+        //       si es mp4merge, la extensión debe ser mp4
         let outputExt = config.preservePCMAudio && project.type === ProjectType.PROJECT_360 ? 'mov' : 'mp4';
         let outputName = `${projectFileName}_joined.${outputExt}`;
         let outputNameToCheck = `${projectFileName}_joined.${project.type}`;
@@ -262,6 +354,42 @@ class VideoProcessor {
         fs.writeFileSync(path.join(os.tmpdir(), `concat_${project.id}.txt`), concatText, 'utf-8');
 
         return path.join(os.tmpdir(), `concat_${project.id}.txt`);
+    }
+
+    /**
+     * Function to embed the gyroscope data
+     *
+     * @param project
+     * @param progressCb
+     */
+    static mergeFilesWithMp4Merge(project, progressCb) {
+        return new Promise((resolve, reject) => {
+            const args = [...project.filePaths, '--out', path.join(project.projectPath, project.outputName)];
+
+            // noinspection JSCheckFunctionSignatures
+            const proc = spawn(mp4MergePath, args);
+
+            project.log.debug(`MP4_Merge: ${JSON.stringify(proc)}`);
+
+            proc.stderr.on('data', (data) => {
+                proc.kill();
+                project.log.error(`MP4_Merge stderr data: ${data}`);
+                reject(data);
+            });
+
+            proc.stdout.on('data', (data) => {
+                project.log.info(data.toString());
+
+                const strParts = data.toString().split(' ');
+                const percentage = strParts[1].substring(0, strParts[1].length - 1);
+
+                if (!isNaN(parseFloat(percentage))) {
+                    progressCb(percentage);
+                }
+            });
+
+            proc.on('close', resolve);
+        });
     }
 
     /**
