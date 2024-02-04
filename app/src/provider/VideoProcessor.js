@@ -310,9 +310,7 @@ class VideoProcessor {
         let projectFileName = path.parse(project.files[0]).name;
         if (config.exportOption === 0) projectFileName = project.name;
 
-        // TODO: revisar todos los sitios donde se usa config.preservePCMAudio y comprobar tambien que el tipo de procesamiento sea ffmpeg
-        //       si es mp4merge, la extensión debe ser mp4
-        let outputExt = config.preservePCMAudio && project.type === ProjectType.PROJECT_360 ? 'mov' : 'mp4';
+        let outputExt = config.preservePCMAudio && config.processingType === FFMPEG_PROCESSING_TYPE && project.type === ProjectType.PROJECT_360 ? 'mov' : 'mp4';
         let outputName = `${projectFileName}_joined.${outputExt}`;
         let outputNameToCheck = `${projectFileName}_joined.${project.type}`;
 
