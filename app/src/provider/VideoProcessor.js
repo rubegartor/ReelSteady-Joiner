@@ -20,19 +20,23 @@ const macExePath = path.join(app.getAppPath(), '..', '..');
 
 let exifToolConfigPath = undefined;
 let gyroProcessPath = undefined;
+let mp4MergePathArm64 = undefined;
+let mp4MergePathx64 = undefined;
 let mp4MergePath = undefined;
 let exiftool = undefined;
 
 switch (os.platform()) {
     case 'darwin':
         gyroProcessPath = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'udtacopy') : path.join(macExePath, 'app', 'bin', 'mac', 'udtacopy');
+        mp4MergePathArm64 = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'mp4merge-arm64') : path.join(macExePath, 'app', 'bin', 'mac', 'mp4merge-arm64');
+        mp4MergePathx64 = Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'mp4merge') : path.join(macExePath, 'app', 'bin', 'mac', 'mp4merge');
 
         switch (os.arch()) {
             case 'arm64':
-                mp4MergePath =  Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'mp4merge-arm64') : path.join(macExePath, 'app', 'bin', 'mac', 'mp4merge-arm64');
+                mp4MergePath = mp4MergePathArm64;
                 break;
             case 'x64':
-                mp4MergePath =  Commons.isDev() ? path.join(exePath, 'app', 'bin', 'mac', 'mp4merge') : path.join(macExePath, 'app', 'bin', 'mac', 'mp4merge');
+                mp4MergePath = mp4MergePathx64;
                 break;
         }
 
@@ -42,7 +46,8 @@ switch (os.platform()) {
         //Give execution permissions to utilities
         if (Commons.isDev()) {
             fs.chmodSync(gyroProcessPath, 0o755);
-            fs.chmodSync(mp4MergePath, 0o755);
+            fs.chmodSync(mp4MergePathArm64, 0o755);
+            fs.chmodSync(mp4MergePathx64, 0o755);
             fs.chmodSync(exiftool, 0o755);
         }
         break;
