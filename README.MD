@@ -6,7 +6,7 @@ _Merge your video files extracted from GoPro without losing quality or gyroscope
 
 _Perfect for long videos like long range drone footage_
 
-Supported on **Windows** & **MacOS** with GoPro Hero 6, 7, 8, 9, 10, 11, 12 and MAX
+Supported on **Windows** & **MacOS** with GoPro Hero 5, 6, 7, 8, 9, 10, 11, 12 and MAX
 
 ## Starting 🚀
 
@@ -18,11 +18,14 @@ _Download and execute installer (**[Releases tab](https://github.com/rubegartor/
 
 1. Choose your settings
    1. Projects queue option higher than 1 is not recommended when using HDD instead of SSD
-   2. Project save path options:
+   2. Processing type:
+      1. MP4Merge (recomended)
+      2. FFmpeg
+   3. Project save path options:
       1. **Select project save path**: Specify the path where the output video will be stored
       2. **Export to source path**: The output video will automatically be stored at the same location of the origin video
 
-![Settings](https://i.imgur.com/LhvV8bs.png)
+![Settings](https://i.imgur.com/yEtSopm.png)
 
 2. Select the folder containing mp4/360 files to concatenate (Normally 4GB chunks or less) (ReelSteady Joiner will take care of finding the files) and start merge process
 
@@ -67,8 +70,7 @@ npm dependencies listed in package.json
 * [ffmpeg](http://ffmpeg.org/) - FFmpeg
 * [exiftool](https://exiftool.org/) - ExifTool
 * [GoProLabs](https://gopro.github.io/labs/) - GoProLabs utils
-
-ReelSteady Joiner is only a wrapper application for GoProLabs "udtacopy" feature, thanks to [dnewman-gpsw](https://github.com/dnewman-gpsw) and [GoProLabs](https://github.com/gopro/labs) for creating udtacopy.
+* [MP4Merge](https://github.com/gyroflow/mp4-merge) - MP4Merge (gyroflow)
 
 ## Authors ✒️
 
