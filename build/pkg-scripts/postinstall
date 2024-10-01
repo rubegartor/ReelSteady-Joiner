@@ -1,6 +1,13 @@
 #!/bin/sh
 sudo xattr -r -d com.apple.quarantine /Applications/ReelSteady\ Joiner.app
-sudo chmod +x /Applications/ReelSteady\ Joiner.app/Contents/app/bin/mac/udtacopy
-sudo chmod +x /Applications/ReelSteady\ Joiner.app/Contents/app/bin/mac/exiftool/exiftool
+sudo chmod +x /Applications/ReelSteady\ Joiner.app/Contents/bin/udtacopy-mac
+
+ARCH=$(uname -m)
+
+if [ "$ARCH" = "x86_64" ]; then
+  sudo chmod +x /Applications/ReelSteady\ Joiner.app/Contents/bin/mp4-merge-mac-x64
+elif [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+  sudo chmod +x /Applications/ReelSteady\ Joiner.app/Contents/bin/mp4-merge-mac-arm64
+fi
 
 exit 0

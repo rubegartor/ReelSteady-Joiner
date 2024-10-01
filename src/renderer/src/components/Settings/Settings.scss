@@ -1,0 +1,37 @@
+@import '../../commons/colors';
+@import '../../commons/mixins';
+
+#settings {
+  > .title {
+    display: flex;
+    font-size: 2em;
+    padding-bottom: 14px;
+    border-bottom: 1px solid $gray;
+    margin-bottom: 20px;
+
+    &-win {
+      margin-top: -15px;
+    }
+
+    &-mac {
+      margin-top: 10px;
+    }
+
+    > .text {
+      color: $light-gray;
+      margin-top: -3px;
+      margin-left: 10px;
+    }
+
+    > .goBack {
+      display: flex;
+      align-items: center;
+      padding-left: 5px;
+      cursor: pointer;
+
+      &:hover {
+        opacity: 0.8;
+      }
+    }
+  }
+}

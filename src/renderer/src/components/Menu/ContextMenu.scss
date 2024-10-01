@@ -1,0 +1,35 @@
+@import '../../commons/colors';
+@import '../../commons/mixins';
+
+.contextmenu {
+  position: absolute;
+  background-color: $context-menu-bg;
+  width: auto;
+  min-width: 180px;
+  border-radius: 4px;
+  box-shadow: 0 0 20px 5px rgba(0, 0, 0, 0.53);
+  z-index: 100;
+
+  > .menu-options {
+    list-style: none;
+
+    > .menu-option {
+      display: flex;
+      align-items: center;
+      padding: 6px 20px;
+      margin: 6px 0;
+      cursor: pointer;
+
+      &:hover {
+        background-color: $dark-blue;
+      }
+    }
+
+    > .menu-separator {
+      width: 92%;
+      height: 1px;
+      margin: 0 4%;
+      background-color: $dark-gray;
+    }
+  }
+}

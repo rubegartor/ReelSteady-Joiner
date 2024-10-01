@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "esModuleInterop": true,
+    "types": ["@wdio/globals/types", "@wdio/mocha-framework", "../src/preload/index", "@types/jest"]
+  },
+  "include": ["./e2e/*.ts"],
+  "exclude": ["node_modules"]
+}

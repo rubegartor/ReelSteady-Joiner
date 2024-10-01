@@ -1,0 +1,24 @@
+@import '../../commons/colors';
+@import '../../commons/commons';
+@import '../../commons/mixins';
+
+.nav {
+  display: flex;
+  width: 100vw;
+  height: $nav-height;
+  -webkit-app-region: drag;
+  z-index: 1000;
+}
+
+.control-box {
+  position: absolute;
+  display: flex;
+  top: 10px;
+  right: 16px;
+  width: auto;
+  height: 26px;
+  padding-top: 5px;
+  margin-left: 10px;
+  -webkit-app-region: no-drag;
+  z-index: 1000;
+}

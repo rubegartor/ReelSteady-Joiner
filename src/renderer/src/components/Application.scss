@@ -1,0 +1,44 @@
+@import '../commons/colors';
+@import '../commons/commons';
+@import '../commons/mixins';
+
+#mainContainer {
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  width: 100%;
+}
+
+.centerContainer {
+  @include flex-center;
+  flex-direction: column;
+  text-align: center;
+  width: 100%;
+  margin: 10px 0;
+}
+
+.subtitle {
+  color: $light-gray;
+  font-size: 1.15em;
+}
+
+.buttonContainer {
+  display: inline-flex;
+  margin-top: 15px;
+}
+
+#selectFiles,
+#processVideos,
+#settingsBtn {
+  margin: 0 5px 10px;
+}
+
+.notification-container {
+  width: 350px;
+  position: absolute;
+  bottom: 20px;
+  right: 15px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}

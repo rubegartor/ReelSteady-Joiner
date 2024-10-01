@@ -1,0 +1,93 @@
+@import '../../commons/colors';
+@import '../../commons/mixins';
+
+.configBox {
+  @include flex-center;
+  flex-wrap: wrap;
+  width: 100%;
+  height: auto;
+  padding: 20px;
+  background-color: $dark-gray;
+  color: $light-gray;
+  border-radius: 5px;
+  box-shadow: 0 0 20px -8px rgba(0, 0, 0, 0.53);
+
+  .configRow {
+    display: flex;
+    width: 100%;
+  }
+
+  .configInfo {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    > .name {
+      font-size: 1.1em;
+    }
+
+    > .description {
+      font-size: 0.8em;
+      color: $medium-gray;
+      padding-top: 6px;
+      padding-right: 100px;
+    }
+  }
+
+  .configType {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.configsContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+  overflow-y: scroll;
+  padding-right: 8px;
+}
+
+.configBox + .configBox {
+  margin-top: 10px;
+}
+
+.configRow + .configRow {
+  border-top: 1px solid $medium-gray;
+  padding-top: 10px;
+  margin-top: 10px;
+}
+
+.input-number {
+  width: 55px;
+  margin-left: 8px;
+  margin-right: 8px;
+  cursor: default;
+  text-align: center;
+}
+
+.btn-number-input-l,
+.btn-number-input-r {
+  background: $orange;
+  color: $white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+}
+
+.btn-number-input-l {
+  padding: 0 0 2px 0;
+}
+
+.btn-number-input-r {
+  padding: 2px 0 0 0;
+}
+
+input[type='text'] + .button-sm {
+  margin-left: 10px;
+}
+
+input[type='text']:not(:read-only) {
+  cursor: text;
+}

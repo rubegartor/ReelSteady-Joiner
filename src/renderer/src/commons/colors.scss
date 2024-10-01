@@ -1,0 +1,20 @@
+$base-color: #212529;
+$white: #ffffff;
+$red: #e74c3c;
+$orange: #e67e22;
+$yellow: #efb026;
+$green: #27ae60;
+$blue: #3787c7;
+
+$bg: $base-color;
+$context-menu-bg: darken($base-color, 5%);
+$dark-blue: darken($blue, 20%);
+$input: lighten($base-color, 20%);
+$gray: lighten($base-color, 30%);
+$semi-dark-gray: lighten($base-color, 10%);
+$dark-gray: lighten($base-color, 5%);
+$medium-gray: lighten($base-color, 40%);
+$light-gray: lighten($base-color, 80%);
+$switch-gray: lighten($base-color, 60%);
+$webkit-scrollbar-thumb: lighten($base-color, 50%);
+$webkit-scrollbar-thumb-hover: lighten($base-color, 20%);

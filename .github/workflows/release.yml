@@ -1,0 +1,182 @@
+name: Release
+permissions:
+  contents: write
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest]
+        arch: [x64, arm64]
+        node-version: [20]
+        exclude:
+          - os: windows-latest
+            arch: arm64
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm install
+      - name: Read version from package.json (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+        shell: pwsh
+
+      - name: Read version from package.json (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          VERSION=$(cat package.json | jq -r .version)
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Configure npm cache directory (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          npm config set cache ${{ env.LOCALAPPDATA }}\npm-cache --global
+          mkdir -p ${{ env.LOCALAPPDATA }}\npm-cache
+        shell: pwsh
+
+      - name: Configure npm cache directory (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          npm config set cache ~/.npm --global
+          mkdir -p ~/.npm
+        shell: bash
+
+      - name: Cache npm dependencies (Windows)
+        if: runner.os == 'Windows'
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.LOCALAPPDATA }}\npm-cache
+          key: ${{ runner.os }}-${{ matrix.arch }}-node-${{ hashFiles('**/npm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-node-
+
+      - name: Cache npm dependencies (macOS)
+        if: runner.os == 'macOS'
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-${{ matrix.arch }}-node-${{ hashFiles('**/npm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.arch }}-node-
+
+      - name: Verify npm cache configuration (Windows)
+        if: runner.os == 'Windows'
+        run: npm config get cache
+        shell: pwsh
+
+      - name: Verify npm cache configuration (macOS)
+        if: runner.os == 'macOS'
+        run: npm config get cache
+        shell: bash
+
+      - name: Verify npm cache directory before install (Windows)
+        if: runner.os == 'Windows'
+        run: dir ${{ env.LOCALAPPDATA }}\npm-cache
+        shell: pwsh
+
+      - name: Verify npm cache directory before install (macOS)
+        if: runner.os == 'macOS'
+        run: ls -al ~/.npm
+        shell: bash
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Verify npm cache directory after install (Windows)
+        if: runner.os == 'Windows'
+        run: dir ${{ env.LOCALAPPDATA }}\npm-cache
+        shell: pwsh
+
+      - name: Verify npm cache directory after install (macOS)
+        if: runner.os == 'macOS'
+        run: ls -al ~/.npm
+        shell: bash
+
+      - name: Run lint
+        run: npm run lint
+
+      - name: Run build
+        env:
+          USE_HARD_LINKS: false
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+        run: |
+          if ('${{ runner.os }}' -eq 'Windows') {
+            npm run package:win
+          } elseif ('${{ runner.os }}' -eq 'macOS' -and '${{ matrix.arch }}' -eq 'x64') {
+            npm run package:mac:x64
+          } elseif ('${{ runner.os }}' -eq 'macOS' -and '${{ matrix.arch }}' -eq 'arm64') {
+            npm run package:mac:arm64
+          } else {
+            echo "Unsupported OS or architecture"
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Upload build artifacts (${{ matrix.os == 'windows-latest' && 'Windows' || 'macOS' }})
+        uses: actions/upload-artifact@v4
+        with:
+          name: ReelSteady Joiner-setup-${{ env.VERSION }}-${{ matrix.os == 'windows-latest' && 'win' || 'mac' }}-${{ matrix.arch }}.${{ matrix.os == 'windows-latest' && 'exe' || 'pkg' }}
+          path: dist/ReelSteady Joiner-setup-${{ env.VERSION }}-${{ matrix.os == 'windows-latest' && 'win' || 'mac' }}-${{ matrix.arch }}.${{ matrix.os == 'windows-latest' && 'exe' || 'pkg' }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read version from package.json
+        run: echo VERSION=$(jq -r .version < package.json) >> $GITHUB_ENV
+        shell: bash
+      - name: Download build artifacts (Windows)
+        uses: actions/download-artifact@v4
+        with:
+          name: ReelSteady Joiner-setup-${{ env.VERSION }}-win-x64.exe
+          path: dist
+      - name: Download build artifacts (macOS x64)
+        uses: actions/download-artifact@v4
+        with:
+          name: ReelSteady Joiner-setup-${{ env.VERSION }}-mac-x64.pkg
+          path: dist
+      - name: Download build artifacts (macOS arm64)
+        uses: actions/download-artifact@v4
+        with:
+          name: ReelSteady Joiner-setup-${{ env.VERSION }}-mac-arm64.pkg
+          path: dist
+      - name: Tag the repository
+        id: tag
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "actions@github.com"
+          TAG=${{ env.VERSION }}
+          echo "$TAG"
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          git tag -a $TAG -m "Published version $TAG" ${GITHUB_SHA}
+          git push origin $TAG
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ReelSteady Joiner v.${{ env.VERSION }}
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+          files: |
+            dist/ReelSteady Joiner-setup-${{ env.VERSION }}-win-x64.exe
+            dist/ReelSteady Joiner-setup-${{ env.VERSION }}-mac-x64.pkg
+            dist/ReelSteady Joiner-setup-${{ env.VERSION }}-mac-arm64.pkg

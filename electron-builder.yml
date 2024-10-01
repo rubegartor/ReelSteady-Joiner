@@ -1,0 +1,67 @@
+productName: ReelSteady Joiner
+appId: org.rubegartor.reelsteady-joiner
+directories:
+  buildResources: build
+files:
+  - '!**/.idea/*'
+  - '!src/**/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintignore,.eslintrc.cjs,.prettier*}'
+  - '!{dev-app-update.yml,CHANGELOG.md,README.md}'
+  - '!{.env,.env.*,*.npmrc,package-lock.json}'
+  - '!tsconfig*.json'
+  - '!node_modules/ffmpeg-static/ffmpeg*'
+  - '!node_modules/**/*.{md,markdown,txt}'
+  - '!build/**/*'
+  - '!resources/**/*'
+  - '!test/**/*'
+  - 'out/**/*'
+artifactName: ${productName}-setup-${version}-${os}-${arch}.${ext}
+compression: maximum
+asar: true
+mac:
+  target:
+    target: pkg
+  icon: ./resources/icon.png
+  extraFiles:
+    - from : ./node_modules/ffmpeg-static/ffmpeg
+      to: bin/ffmpeg
+    - from: ./resources/bin/udtacopy-mac
+      to: bin/udtacopy-mac
+    - from: ./resources/bin
+      to: bin
+      filter:
+        - '**/*mac*${arch}*'
+  extraResources:
+    - from: resources/icon.png
+pkg:
+  installLocation: /Applications
+  scripts: ./build/pkg-scripts
+  allowAnywhere: false
+  allowCurrentUserHome: false
+  isRelocatable: false
+nsis:
+  perMachine: true
+  oneClick: false
+  installerIcon: ./resources/icon.ico
+  uninstallerIcon: ./resources/icon.ico
+  installerHeaderIcon: ./resources/icon.ico
+  deleteAppDataOnUninstall: true
+  warningsAsErrors: false
+  runAfterFinish: false
+  createDesktopShortcut: true
+win:
+  icon: ./resources/icon.ico
+  target:
+    - nsis
+  extraFiles:
+    - from: ./node_modules/ffmpeg-static/ffmpeg.exe
+      to: bin/ffmpeg.exe
+    - from: ./resources/bin/udtacopy-win.exe
+      to: bin/udtacopy-win.exe
+    - from: ./resources/bin
+      to: bin
+      filter:
+        - '**/*win*'
+  extraResources:
+    - from: resources/icon.png

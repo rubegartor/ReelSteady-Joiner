@@ -1,5 +1,7 @@
-/.idea
-/builds
-/node_modules
-package-lock.json
-**/.DS_STORE
+node_modules
+dist
+out
+.idea
+.DS_Store
+*.log*
+test/e2e/resources

@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "target": "ES6",
+    "module": "CommonJS",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@assets/*": [
+        "./src/renderer/src/assets/*"
+      ],
+      "@components/*": [
+        "./src/renderer/src/components/*"
+      ],
+      "@main/*": [
+        "./src/main/*"
+      ],
+      "@preload/*": [
+        "./src/preload/*"
+      ],
+      "@renderer/*": [
+        "./src/renderer/src/*"
+      ],
+      "@util/*": [
+        "./src/util/*"
+      ],
+      "@src/*": [
+        "./src/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": ["node_modules", "test", "build"]
+}

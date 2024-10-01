@@ -1,0 +1,32 @@
+@import '../../commons/commons';
+
+.notification {
+  background-color: rgba($context-menu-bg, 0.9);
+  color: $white;
+  width: 100%;
+  height: auto;
+  border-radius: 5px;
+  padding: 10px;
+
+  .title {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    font-weight: bold;
+    text-wrap: nowrap;
+
+    .notification-close {
+      width: 100%;
+      display: flex;
+      justify-content: end;
+    }
+  }
+
+  .message {
+    margin-top: 10px;
+  }
+}
+
+.notification + .notification {
+  margin-top: 10px;
+}
