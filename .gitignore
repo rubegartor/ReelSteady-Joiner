@@ -4,4 +4,4 @@ out
 .idea
 .DS_Store
 *.log*
-test/e2e/resources
+test/e2e/resources/vids
