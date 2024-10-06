@@ -178,7 +178,15 @@ const Application: React.FC = (): React.JSX.Element => {
                 type='button'
                 className='button-orange'
                 onClick={(): void => {
-                  window.electron.ipcRenderer.send(AppChannel.OpenDialog);
+                  window.electron.ipcRenderer.invoke(AppChannel.OpenDialog).then(async (path?: string): Promise<void> => {
+                    if (path === undefined) return;
+
+                    setPathDialog(StateEnum.Disabled);
+                    setLoadingFiles(true);
+
+                    await fetchProjects(path);
+                  });
+
                 }}
                 id='selectFiles'
                 disabled={pathDialog === StateEnum.Disabled}
