@@ -72,9 +72,10 @@ ipcMain.on(AppChannel.MinimizeApp, (): void => {
   mainWindow?.minimize();
 });
 
-ipcMain.on(AppChannel.OpenDialog, async (event: IpcMainEvent, path?: string): Promise<void> => {
+ipcMain.handle(AppChannel.OpenDialog, async (event: IpcMainInvokeEvent, path?: string): Promise<undefined | string> => {
   if (process.env.NODE_ENV === 'test' && path !== undefined) {
     event.sender.send(AppChannel.OpenDialogReturn, path);
+    return path;
   } else {
     let returnValue: string | undefined = undefined;
 
@@ -86,7 +87,7 @@ ipcMain.on(AppChannel.OpenDialog, async (event: IpcMainEvent, path?: string): Pr
       returnValue = result.filePaths[0];
     }
 
-    event.sender.send(AppChannel.OpenDialogReturn, returnValue);
+    return returnValue;
   }
 });
 

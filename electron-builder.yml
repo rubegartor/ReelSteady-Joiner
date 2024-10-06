@@ -1,5 +1,6 @@
 productName: ReelSteady Joiner
 appId: org.rubegartor.reelsteady-joiner
+beforePack: ./build/prePack.js
 directories:
   buildResources: build
 files:

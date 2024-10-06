@@ -1,5 +1,5 @@
-import { browser } from 'wdio-electron-service';
 import { ChainablePromiseElement } from 'webdriverio';
+import { $, expect, browser } from '@wdio/globals'
 
 import { AppChannel } from '../../src/AppChannel';
 import { SelectorType, commons, resourcesPath } from './fixtures';
@@ -7,7 +7,7 @@ import { SelectorType, commons, resourcesPath } from './fixtures';
 async function openSelectDialog(): Promise<void> {
   await browser.execute(
     (channel: AppChannel, resourcesPath: string): void => {
-      window.electron.ipcRenderer.send(channel, resourcesPath);
+      window.electron.ipcRenderer.invoke(channel, resourcesPath);
     },
     AppChannel.OpenDialog,
     resourcesPath

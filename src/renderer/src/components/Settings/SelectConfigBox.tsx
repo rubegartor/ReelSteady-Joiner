@@ -47,8 +47,9 @@ const SelectConfigBox: React.FC<SelectConfigBoxProps> = ({
   };
 
   const searchSavePath = (): void => {
-    const path: string | undefined = window.electron.ipcRenderer.sendSync(AppChannel.OpenDialog);
-    if (path !== undefined) setPath(path);
+    window.electron.ipcRenderer.invoke(AppChannel.OpenDialog).then((path): void => {
+      if (path !== undefined) setPath(path);
+    });
   };
 
   return (
