@@ -16,7 +16,6 @@ import {
 } from '@main/videoProvider';
 
 import { AppChannel } from '@src/AppChannel';
-import { UnexpededCloseSpawn } from '@main/error/UnexpededCloseSpawn';
 
 export enum ProjectType {
   PROJECT_MP4 = 'mp4',
@@ -25,6 +24,7 @@ export enum ProjectType {
 
 class Project {
   public readonly id: string = uuidv4();
+  public uniqueFileId: string = '';
   public files: string[] = [];
   public absolutePath: string = '';
   public savePath: string = '';
@@ -85,6 +85,7 @@ class Project {
    */
   private init(): void {
     this.name = path.parse(this.files[0]).name;
+    this.uniqueFileId = this.name.substring(0, 2) + this.name.substring(4, 8);
 
     switch (path.extname(this.files[0]).toLowerCase().split('.').pop()) {
       case ProjectType.PROJECT_MP4:
@@ -135,24 +136,22 @@ class Project {
       mergeFilesWithMp4Merge(this, (progress: string): void => {
         this.progress = parseInt(progress);
         this.update();
-      }).then((): void => {
-        this.completed = true;
-        this.progress = 100;
+      })
+        .then((): void => {
+          this.completed = true;
+          this.progress = 100;
 
-        this.update();
-        resolve();
-      }).catch((error): void => {
-        if (error instanceof UnexpededCloseSpawn) {
+          this.update();
+          resolve();
+        })
+        .catch((error): void => {
           LOG.error(error.toString(), LogTypeEnum.ERROR);
 
           this.failed = true;
           this.update();
 
           resolve();
-        } else {
-          throw error;
-        }
-      });
+        });
     });
   }
 
@@ -161,24 +160,22 @@ class Project {
       mergeFilesWithFFmpeg(this, (progress: { timemark: string }): void => {
         this.progress = Math.floor((convertTimemarkToSeconds(progress.timemark) / this.duration) * 100);
         this.update();
-      }).then((): void => {
-        this.completed = true;
-        this.progress = 100;
+      })
+        .then((): void => {
+          this.completed = true;
+          this.progress = 100;
 
-        this.update();
-        resolve();
-      }).catch((error): void => {
-        if (error instanceof UnexpededCloseSpawn) {
+          this.update();
+          resolve();
+        })
+        .catch((error): void => {
           LOG.error(error.toString(), LogTypeEnum.ERROR);
 
           this.failed = true;
           this.update();
 
           resolve();
-        } else {
-          throw error;
-        }
-      });
+        });
     });
   }
 }

@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { CONFIG } from '@main/app';
 
-export enum GoProModel {
+enum GoProModel {
   HERO5LOW = 'hero5-',
   HERO5HIGH = 'hero+',
   HEROMAX = 'max',
@@ -99,10 +99,11 @@ export const loadFiles = async (folderPath: string): Promise<FileGroups> => {
 
     if (isGoProFile(goProFileName)) {
       const filePath: string = path.parse(goProFilePath).dir;
-      const fileNumber: string = goProFileName.substring(4, 8);
+      const uniqueFileId: string = goProFileName.substring(0, 2) + goProFileName.substring(4, 8);
+      const key: string = `${uniqueFileId}_${filePath}`;
 
-      if (!acc[fileNumber]) {
-        acc[fileNumber] = {
+      if (!acc[key]) {
+        acc[key] = {
           model: identifyGoProModel(goProFileName),
           absolutePath: filePath,
           relativePath: path.relative(folderPath, filePath),
@@ -110,7 +111,7 @@ export const loadFiles = async (folderPath: string): Promise<FileGroups> => {
         };
       }
 
-      acc[fileNumber].files.push(goProFileName);
+      acc[key].files.push(goProFileName);
     }
 
     return acc;

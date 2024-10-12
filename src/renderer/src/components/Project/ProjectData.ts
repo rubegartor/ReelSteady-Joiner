@@ -1,6 +1,6 @@
 export interface ProjectData {
   id: string;
-  fileNumber: string;
+  uniqueFileId: string;
   files: string[];
   absolutePath: string;
   savePath: string;
