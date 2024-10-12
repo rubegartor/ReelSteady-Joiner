@@ -1,4 +1,4 @@
-import React, { ChangeEvent, RefObject, useRef, useState } from 'react';
+import React, { ChangeEvent, RefObject, useEffect, useRef, useState } from 'react';
 
 import '@renderer/commons/commons.scss';
 
@@ -22,6 +22,7 @@ const isDarwin: boolean = window.electron.ipcRenderer.sendSync(AppChannel.GetPla
 const Settings: React.FC<SettingsProps> = ({ toggle, disabled }: SettingsProps): React.JSX.Element => {
   const [showPCMSetting, setShowPCMSetting] = useState(false);
   const configsContainerRef: RefObject<HTMLDivElement> = useRef<HTMLDivElement>(null);
+  const [hasScrollbar, setScrollbar] = useState(false);
 
   const updateConfig = (key: string, value: number | string | boolean): void => {
     window.electron.ipcRenderer.send(AppChannel.UpdateConfig, {
@@ -29,6 +30,27 @@ const Settings: React.FC<SettingsProps> = ({ toggle, disabled }: SettingsProps):
       value
     });
   };
+
+  useEffect((): (() => void) => {
+    const container: HTMLDivElement | null = configsContainerRef.current;
+    const adjustMargin = (): void => {
+      if (container) {
+        setScrollbar(container.scrollHeight > container.clientHeight);
+      }
+    };
+
+    const observer: ResizeObserver = new ResizeObserver((): void => {
+      adjustMargin();
+    });
+
+    if (container) {
+      observer.observe(container);
+    }
+
+    return (): void => {
+      if (container) observer.unobserve(container);
+    };
+  }, [configsContainerRef]);
 
   return (
     <div className='container' id='settings'>
@@ -38,7 +60,7 @@ const Settings: React.FC<SettingsProps> = ({ toggle, disabled }: SettingsProps):
         </div>
         <div className='text'>Settings</div>
       </div>
-      <div className='configsContainer' ref={configsContainerRef}>
+      <div className={`configsContainer ${hasScrollbar ? 'has-scrollbar' : ''}`} ref={configsContainerRef}>
         <SelectConfigBox
           title='Project save path'
           description='Method to export video files'
@@ -87,7 +109,7 @@ const Settings: React.FC<SettingsProps> = ({ toggle, disabled }: SettingsProps):
           <SwitchConfigBox
             title='Preserve PCM audio'
             description='If enabled, 360 files will be processed using the mov format, retain PCM audio
-                        and the file will be slightly larger (Only for 360 files and FFmpeg processing type)'
+                        and the file will be slightly larger'
             value={window.electron.ipcRenderer.sendSync(AppChannel.GetConfig).preservePCMAudio}
             disabled={disabled}
             callback={(checked: boolean): void => updateConfig('preservePCMAudio', checked)}

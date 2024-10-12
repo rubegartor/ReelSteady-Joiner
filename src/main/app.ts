@@ -24,12 +24,10 @@ export const PROJECTS: Project[] = [];
 const loadProjects = async (path: string): Promise<void> => {
   try {
     const fileGroups: FileGroups = await loadFiles(path);
-    for (const dRead of Object.entries(fileGroups)) {
-      const [key, data] = dRead;
+    for (const data of Object.values(fileGroups)) {
       const project: Project = new Project({
         files: data.files,
-        absolutePath: data.absolutePath,
-        name: key
+        absolutePath: data.absolutePath
       });
 
       // Remove completed projects

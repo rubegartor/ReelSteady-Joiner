@@ -79,16 +79,16 @@ const Application: React.FC = (): React.JSX.Element => {
 
   const fetchProjects: (path?: string) => Promise<void> = useCallback(
     async (path?: string): Promise<void> => {
-      const projectsData: ProjectData[] = (await window.electron.ipcRenderer
-        .invoke(AppChannel.GetProjects, { path })
-        .catch()) as ProjectData[];
+      const projectsData: ProjectData[] = await window.electron.ipcRenderer.invoke(AppChannel.GetProjects, { path });
 
       if (projectsData.length > 0) {
         const filteredProjects: ProjectData[] = projects.filter((project: ProjectData): boolean => !project.completed);
-        const existingProjectIds: Set<string> = new Set(filteredProjects.map((project: ProjectData): string => project.files[0]));
+        const existingProjectIds: Set<string> = new Set(
+          filteredProjects.map((project: ProjectData): string => `${project.absolutePath}_${project.uniqueFileId}`)
+        );
 
         const newProjects: ProjectData[] = projectsData.filter((newProject: ProjectData): boolean => {
-          return !existingProjectIds.has(newProject.files[0]);
+          return !existingProjectIds.has(`${newProject.absolutePath}_${newProject.uniqueFileId}`);
         });
 
         const updatedProjects: ProjectData[] = [...filteredProjects, ...newProjects];
@@ -186,7 +186,6 @@ const Application: React.FC = (): React.JSX.Element => {
 
                     await fetchProjects(path);
                   });
-
                 }}
                 id='selectFiles'
                 disabled={pathDialog === StateEnum.Disabled}

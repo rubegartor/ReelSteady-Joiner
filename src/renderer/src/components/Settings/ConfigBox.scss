@@ -45,8 +45,11 @@
   flex-direction: column;
   width: 100%;
   height: auto;
-  overflow-y: scroll;
-  padding-right: 8px;
+  overflow-y: auto;
+
+  &.has-scrollbar {
+    padding-right: 8px;
+  }
 }
 
 .configBox + .configBox {

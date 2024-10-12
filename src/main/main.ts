@@ -22,9 +22,9 @@ function createWindow(): void {
 
   mainWindow = new BrowserWindow({
     width: 960,
-    height: 600,
+    height: 620,
     minWidth: 960,
-    minHeight: 600,
+    minHeight: 620,
     show: false,
     icon: getAssetPath('icon.png'),
     frame: false,

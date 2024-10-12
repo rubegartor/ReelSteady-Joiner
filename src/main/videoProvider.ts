@@ -8,13 +8,13 @@ import path from 'node:path';
 
 import { CONFIG, LOG } from '@main/app';
 import { ProcessingTypeEnum, SavePathEnum } from '@main/config';
+import { FfmpegNotDefined } from '@main/error/FfmpegNotDefined';
+import { UnexpededCloseSpawn } from '@main/error/UnexpededCloseSpawn';
+import { UnsupportedArch } from '@main/error/UnsupportedArch';
 import { readDirectory } from '@main/fileSystem';
 import { LogTypeEnum } from '@main/logging';
 import Project, { ProjectType } from '@main/project';
 import { convertTimemarkToSeconds, isDev, scapePath } from '@main/util';
-import { UnexpededCloseSpawn } from '@main/error/UnexpededCloseSpawn';
-import { UnsupportedArch } from '@main/error/UnsupportedArch';
-import { FfmpegNotDefined } from '@main/error/FfmpegNotDefined';
 
 const FFMPEG_NOT_DEFINED: string = 'FFmpeg path is undefined';
 
@@ -142,7 +142,10 @@ export const getModifiedDate = async (project: Project): Promise<Date> => {
 const processGyro = (project: Project): Promise<void> => {
   return new Promise((resolve, reject): void => {
     const args: string[] = [project.filePaths[0], path.join(project.savePath, project.outputName)];
-    const proc: ChildProcess = spawn(gyroProcessPath, args.map((a: string): string => `"${a}"`));
+    const proc: ChildProcess = spawn(
+      gyroProcessPath,
+      args.map((a: string): string => `"${a}"`)
+    );
 
     LOG.info(`procesGryro: ${JSON.stringify(proc)}`, LogTypeEnum.PROJECT, project.name);
 
@@ -156,7 +159,7 @@ const processGyro = (project: Project): Promise<void> => {
       LOG.info(`Udtacopy stdout data: ${data}`, LogTypeEnum.PROJECT, project.name);
     });
 
-    proc.on('close', (code: number|null): void => {
+    proc.on('close', (code: number | null): void => {
       if (code === null || code !== 1) reject(new UnexpededCloseSpawn(code, 'Process closed unexpectedly'));
       resolve();
     });
@@ -171,6 +174,7 @@ export const mergeFilesWithMp4Merge = (project: Project, progressCb: (data: stri
     const proc: ChildProcess = spawn(mp4MergePath, args);
 
     proc.stderr?.on('data', (data): void => {
+      proc.kill();
       reject(data);
     });
 
@@ -183,7 +187,7 @@ export const mergeFilesWithMp4Merge = (project: Project, progressCb: (data: stri
       }
     });
 
-    proc.on('close', (code: number|null): void => {
+    proc.on('close', (code: number | null): void => {
       if (code === null || code !== 0) reject(new UnexpededCloseSpawn(code, 'Process closed unexpectedly'));
       resolve();
     });
@@ -221,9 +225,11 @@ export const mergeFilesWithFFmpeg = (project: Project, progressCb: (progress: { 
             });
           })
           .on('end', (): void => {
-            processGyro(project).then(resolve).catch((error): void => {
-              reject(error);
-            });
+            processGyro(project)
+              .then(resolve)
+              .catch((error): void => {
+                reject(error);
+              });
           })
           .inputOptions(inputOptions)
           .outputOptions(outputOptions)
