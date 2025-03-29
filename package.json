@@ -57,7 +57,7 @@
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@types/webdriverio": "^5.0.0",
-    "@vitejs/plugin-react": "^4.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
     "@wdio/cli": "^9.0.7",
     "@wdio/local-runner": "^9.0.7",
     "@wdio/mocha-framework": "^9.0.6",
@@ -65,7 +65,7 @@
     "cross-env": "^7.0.3",
     "electron": "^31.3.1",
     "electron-builder": "^25.0.4",
-    "electron-vite": "^2.3.0",
+    "electron-vite": "^3.1.0",
     "eslint": "^8.57.0",
     "eslint-import-resolver-alias": "^1.1.2",
     "eslint-import-resolver-typescript": "^3.6.1",
@@ -79,7 +79,7 @@
     "ts-jest": "^29.2.4",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.2",
-    "vite": "^5.4.14",
+    "vite": "^6.2.3",
     "wdio-electron-service": "^7.0.0"
   }
 }
