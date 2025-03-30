@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 
-export const version: string = '1.4.1';
+export const version: string = '1.4.2';
 export const updateUrl: string = 'https://raw.githubusercontent.com/rubegartor/ReelSteady-Joiner/master/package.json';
 export const isDev: boolean = process.env.NODE_ENV === 'development';
 
