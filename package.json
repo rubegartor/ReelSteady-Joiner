@@ -32,7 +32,7 @@
     "package:win": "npm run build && electron-builder --win --publish never",
     "package:mac:arm64": "electron-vite build && electron-builder --mac --arm64 --publish never",
     "package:mac:x64": "electron-vite build && electron-builder --mac --x64 --publish never",
-    "test": "npm run test:unit && npm run test:e2e",
+    "test": "npm run package:unpack && npm run test:unit && npm run test:e2e",
     "test:unit": "cross-env NODE_ENV=test-unit TS_NODE_FILES=true jest --config test/jest.config.ts",
     "test:e2e": "cross-env NODE_ENV=test TS_NODE_FILES=true wdio run test/wdio.config.ts"
   },
