@@ -11,10 +11,10 @@ enum GoProModel {
   NONE = ''
 }
 
-const GOPRO_FILE_LENGTH: number = 12;
-const HERO5LOWRegex: RegExp = /^G(OPR)?P?\d{4,6}\.(mp4|MP4)$/i;
-const HERO5HIGHRegex: RegExp = /^G[PHXS]?\d{6,7}\.(mp4|MP4)$/i;
-const MAXRegex: RegExp = /^GS?\d{6,7}\.360$/i;
+// Core matching regexes (allow optional custom prefix before the GoPro code)
+const HERO5LOWRegex: RegExp = /.*(G(?:OPR)?P?\d{4,6})\.(mp4|MP4)$/i;
+const HERO5HIGHRegex: RegExp = /.*(G[PHXS]?\d{6,7})\.(mp4|MP4)$/i;
+const MAXRegex: RegExp = /.*(GS?\d{6,7})\.360$/i;
 
 interface GoProFile {
   file: string;
@@ -32,6 +32,38 @@ export interface FileGroup {
 export interface FileGroups {
   [key: string]: FileGroup;
 }
+
+// Extract core GoPro naming info from a filename (supports custom prefixes)
+const extractGoProCore = (
+  fileName: string
+): { model: GoProModel; core: string; code2: string; digits: string } | null => {
+  // Try to match MAX first (distinct extension), then HERO5LOW, then HERO5HIGH
+  let match: RegExpMatchArray | null = fileName.match(MAXRegex);
+  if (match) {
+    const core: string = match[1]; // e.g., GS0123456
+    const code2: string = core.substring(0, 2).toUpperCase();
+    const digits: string = core.replace(/^GS?/i, '');
+    return { model: GoProModel.HEROMAX, core, code2, digits };
+  }
+
+  match = fileName.match(HERO5LOWRegex);
+  if (match) {
+    const core: string = match[1]; // e.g., GOPR0123 or GP012345
+    const code2: string = core.substring(0, 2).toUpperCase();
+    const digits: string = core.replace(/^G(?:OPR)?P?/i, '');
+    return { model: GoProModel.HERO5LOW, core, code2, digits };
+  }
+
+  match = fileName.match(HERO5HIGHRegex);
+  if (match) {
+    const core: string = match[1]; // e.g., GX010117 or GH010117
+    const code2: string = core.substring(0, 2).toUpperCase();
+    const digits: string = core.replace(/^G[PHXS]?/i, '');
+    return { model: GoProModel.HERO5HIGH, core, code2, digits };
+  }
+
+  return null;
+};
 
 export const readDirectory = async (dir: string, depth: number = 0): Promise<string[]> => {
   let dirContent: string[] = [];
@@ -60,35 +92,13 @@ export const readDirectory = async (dir: string, depth: number = 0): Promise<str
 };
 
 const identifyGoProModel = (fileName: string): GoProModel => {
-  const modelMap: { [key: string]: GoProModel } = {
-    GH: GoProModel.HERO5HIGH,
-    GX: GoProModel.HERO5HIGH,
-    GS: GoProModel.HEROMAX,
-    GOPR: GoProModel.HERO5LOW,
-    GP: GoProModel.HERO5LOW
-  };
-
-  for (const prefix in modelMap) {
-    if (fileName.startsWith(prefix)) {
-      return modelMap[prefix];
-    }
-  }
-
-  return GoProModel.NONE;
+  const extracted = extractGoProCore(fileName);
+  return extracted ? extracted.model : GoProModel.NONE;
 };
 
 const isGoProFile = (file: string): boolean => {
-  const modelRegexMap: { [key in GoProModel]: RegExp | null } = {
-    [GoProModel.HERO5LOW]: HERO5LOWRegex,
-    [GoProModel.HERO5HIGH]: HERO5HIGHRegex,
-    [GoProModel.HEROMAX]: MAXRegex,
-    [GoProModel.NONE]: null
-  };
-
-  const model: GoProModel = identifyGoProModel(file);
-  const rgx: RegExp | null = modelRegexMap[model];
-
-  return rgx ? file.length === GOPRO_FILE_LENGTH && rgx.test(file) : false;
+  // Accept files that match any GoPro core pattern, regardless of custom prefix length
+  return extractGoProCore(file) !== null;
 };
 
 export const loadFiles = async (folderPath: string): Promise<FileGroups> => {
@@ -99,12 +109,14 @@ export const loadFiles = async (folderPath: string): Promise<FileGroups> => {
 
     if (isGoProFile(goProFileName)) {
       const filePath: string = path.parse(goProFilePath).dir;
-      const uniqueFileId: string = goProFileName.substring(0, 2) + goProFileName.substring(4, 8);
+      const extracted = extractGoProCore(goProFileName)!;
+      const last4: string = extracted.digits.slice(-4);
+      const uniqueFileId: string = `${extracted.code2}${last4}`;
       const key: string = `${uniqueFileId}_${filePath}`;
 
       if (!acc[key]) {
         acc[key] = {
-          model: identifyGoProModel(goProFileName),
+          model: extracted.model,
           absolutePath: filePath,
           relativePath: path.relative(folderPath, filePath),
           files: []
@@ -136,8 +148,11 @@ export const loadFiles = async (folderPath: string): Promise<FileGroups> => {
 
 const sortGoProNames = (arr: string[]): string[] => {
   const precomputed: GoProFile[] = arr.map((file: string): GoProFile => {
-    const model: GoProModel = identifyGoProModel(file);
-    const chapterNum: number = isNaN(Number(file.substring(1, 4))) ? parseInt(file.substring(2, 4)) : parseInt(file.substring(1, 4));
+    const extracted = extractGoProCore(file);
+    const model: GoProModel = extracted ? extracted.model : GoProModel.NONE;
+    const digits: string = extracted ? extracted.digits : '';
+    // Chapter number is the first two digits after the GoPro code
+    const chapterNum: number = digits.length >= 2 && !isNaN(Number(digits.substring(0, 2))) ? parseInt(digits.substring(0, 2)) : NaN;
     return { file, model, chapterNum };
   });
 
@@ -157,14 +172,7 @@ const sortGoProNames = (arr: string[]): string[] => {
 };
 
 const getChapterNum = (chapterFile: string): number => {
-  const model: GoProModel = identifyGoProModel(chapterFile);
-  let chapterNum: number;
-
-  if (model === GoProModel.HERO5LOW && !chapterFile.startsWith('GOPR')) {
-    chapterNum = isNaN(Number(chapterFile.substring(1, 4))) ? parseInt(chapterFile.substring(2, 4)) : parseInt(chapterFile.substring(1, 4));
-  } else {
-    chapterNum = isNaN(Number(chapterFile.substring(1, 4))) ? parseInt(chapterFile.substring(2, 4)) : parseInt(chapterFile.substring(1, 4));
-  }
-
-  return chapterNum;
+  const extracted = extractGoProCore(chapterFile);
+  const digits: string = extracted ? extracted.digits : '';
+  return digits.length >= 2 && !isNaN(Number(digits.substring(0, 2))) ? parseInt(digits.substring(0, 2)) : NaN;
 };
