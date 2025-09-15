@@ -85,7 +85,23 @@ class Project {
    */
   private init(): void {
     this.name = path.parse(this.files[0]).name;
-    this.uniqueFileId = this.name.substring(0, 2) + this.name.substring(4, 8);
+    // Compute a stable unique id that supports optional custom prefixes before the GoPro code
+    // Prefer extracting the core GoPro segment (e.g., GX010117, GOPR0123, GS0123456)
+    const nameOnly: string = this.name;
+    const coreMatch: RegExpMatchArray | null =
+      nameOnly.match(/(GS?\d{6,7})$/i) ||
+      nameOnly.match(/(G(?:OPR)?P?\d{4,6})$/i) ||
+      nameOnly.match(/(G[PHXS]?\d{6,7})$/i);
+
+    if (coreMatch) {
+      const core: string = coreMatch[1];
+      const code2: string = core.substring(0, 2).toUpperCase();
+      const digits: string = core.replace(/\D+/g, '');
+      this.uniqueFileId = `${code2}${digits.slice(-4)}`;
+    } else {
+      // Fallback to legacy behavior
+      this.uniqueFileId = this.name.substring(0, 2) + this.name.substring(4, 8);
+    }
 
     switch (path.extname(this.files[0]).toLowerCase().split('.').pop()) {
       case ProjectType.PROJECT_MP4:
